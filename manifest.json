@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.5.0.0",
+        "changelog": "Fixes items never leaving a collection. Adds Wikidata genre lists, never/always include per title, fields-that-must-match, and a stricter stock Christmas rule.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.5.0/LibraryOrganizer_0.5.0.0.zip",
+        "checksum": "ef7004caee14bc3282150ce166198688",
+        "timestamp": "2026-11-14T23:51:24Z"
+      },
+      {
         "version": "0.4.0.0",
         "changelog": "Runs on its own: syncs after server start and when media or metadata changes. Automatic genre and country collections on by default.",
         "targetAbi": "10.11.0.0",
