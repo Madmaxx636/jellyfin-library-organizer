@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.2.1.0",
+        "changelog": "Settings page now has its own entry in the dashboard sidebar and a save-and-sync button.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.2.1/LibraryOrganizer_0.2.1.0.zip",
+        "checksum": "ded1fa83e878328334fc16a8151362d4",
+        "timestamp": "2026-11-14T23:06:30Z"
+      },
+      {
         "version": "0.2.0.0",
         "changelog": "Home screen rows through Home Screen Sections, a per-rule toggle, and a setting for items per row.",
         "targetAbi": "10.11.0.0",
