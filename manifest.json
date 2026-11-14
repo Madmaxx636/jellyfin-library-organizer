@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.4.0.0",
+        "changelog": "Runs on its own: syncs after server start and when media or metadata changes. Automatic genre and country collections on by default.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.4.0/LibraryOrganizer_0.4.0.0.zip",
+        "checksum": "be2782f5bca800c1201b9d9dfeaa0884",
+        "timestamp": "2026-11-14T23:29:56Z"
+      },
+      {
         "version": "0.3.0.0",
         "changelog": "Leave-out fields, audio language rule, automatic genre and country collections, home row sorting, preview, templates, auto-sync after new media. Fixes default rules duplicating on every settings load.",
         "targetAbi": "10.11.0.0",
