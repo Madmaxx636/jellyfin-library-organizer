@@ -31,7 +31,8 @@
 
         <h2>General</h2>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="removeNonMatching" /><span>Remove items that stop matching</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnChange" /><span>Re-sync a couple of minutes after new movies or shows are added</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnChange" /><span>Re-sync a couple of minutes after movies or shows are added or their metadata changes</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnStart" /><span>Sync about a minute after the server starts</span></label></div>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="deleteRemoved" /><span>Delete a collection when its rule is removed or disabled (media files are never touched)</span></label></div>
         <label>Minimum items for a rule's collection <input type="number" id="minItems" min="1" style="width:5em"></label><br><br>
         <label>Items per home screen row (needs Home Screen Sections) <input type="number" id="homeRowLimit" min="1" style="width:5em"></label>
@@ -158,6 +159,7 @@
       function gather() {
         cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
         cfg.SyncOnLibraryChange = page.querySelector('#syncOnChange').checked;
+        cfg.SyncOnStartup = page.querySelector('#syncOnStart').checked;
         cfg.DeleteRemovedCollections = page.querySelector('#deleteRemoved').checked;
         cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
         cfg.AutoCountryCollections = page.querySelector('#autoCountry').checked;
@@ -177,6 +179,7 @@
           cfg = c;
           page.querySelector('#removeNonMatching').checked = c.RemoveNonMatching;
           page.querySelector('#syncOnChange').checked = c.SyncOnLibraryChange;
+          page.querySelector('#syncOnStart').checked = c.SyncOnStartup;
           page.querySelector('#deleteRemoved').checked = c.DeleteRemovedCollections;
           page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
           page.querySelector('#autoCountry').checked = c.AutoCountryCollections;

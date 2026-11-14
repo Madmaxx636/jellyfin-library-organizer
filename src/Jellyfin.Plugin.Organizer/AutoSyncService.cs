@@ -21,10 +21,11 @@ public class ServiceRegistrator : IPluginServiceRegistrator
     }
 }
 
-/// <summary>Runs the sync a couple of minutes after new movies or shows land in the library.</summary>
+/// <summary>Runs the sync after server start, and a couple of minutes after movies or shows change.</summary>
 public sealed class AutoSyncService : IHostedService, IDisposable
 {
     private static readonly TimeSpan Delay = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(60);
     private readonly ILibraryManager _library;
     private readonly ITaskManager _tasks;
     private readonly object _lock = new();
@@ -40,6 +41,17 @@ public sealed class AutoSyncService : IHostedService, IDisposable
     {
         _library.ItemAdded += OnChanged;
         _library.ItemRemoved += OnChanged;
+        _library.ItemUpdated += OnChanged;
+
+        if (Plugin.Instance?.Configuration.SyncOnStartup != false)
+        {
+            // Give the library a moment to finish loading before the first sync.
+            lock (_lock)
+            {
+                _timer = new Timer(_ => _tasks.QueueScheduledTask<SyncCollectionsTask>(), null, StartupDelay, Timeout.InfiniteTimeSpan);
+            }
+        }
+
         return Task.CompletedTask;
     }
 
@@ -47,6 +59,7 @@ public sealed class AutoSyncService : IHostedService, IDisposable
     {
         _library.ItemAdded -= OnChanged;
         _library.ItemRemoved -= OnChanged;
+        _library.ItemUpdated -= OnChanged;
         return Task.CompletedTask;
     }
 

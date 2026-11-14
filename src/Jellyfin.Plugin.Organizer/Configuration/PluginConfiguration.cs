@@ -89,10 +89,10 @@ public class PluginConfiguration : BasePluginConfiguration
     public int HomeRowLimit { get; set; } = 16;
 
     /// <summary>One collection per genre ("Comedy Movies").</summary>
-    public bool AutoGenreCollections { get; set; }
+    public bool AutoGenreCollections { get; set; } = true;
 
     /// <summary>One collection per production country ("Movies from Japan").</summary>
-    public bool AutoCountryCollections { get; set; }
+    public bool AutoCountryCollections { get; set; } = true;
 
     /// <summary>Movies, Series or Both for the automatic collections.</summary>
     public string AutoMediaType { get; set; } = "Movie";
@@ -101,8 +101,32 @@ public class PluginConfiguration : BasePluginConfiguration
 
     public bool AutoShowOnHome { get; set; }
 
-    /// <summary>Re-sync a couple of minutes after new movies or shows are added.</summary>
+    /// <summary>Re-sync a couple of minutes after movies or shows are added or their metadata changes.</summary>
     public bool SyncOnLibraryChange { get; set; } = true;
+
+    /// <summary>Run a sync about a minute after the server starts.</summary>
+    public bool SyncOnStartup { get; set; } = true;
+
+    /// <summary>Bumped when a new version needs to change older saved settings once.</summary>
+    public int SettingsVersion { get; set; }
+
+    public const int CurrentSettingsVersion = 2;
+
+    /// <summary>Version 2 turned the automatic genre and country collections and both auto-syncs on by default.</summary>
+    public static bool Migrate(PluginConfiguration config)
+    {
+        if (config.SettingsVersion >= CurrentSettingsVersion)
+        {
+            return false;
+        }
+
+        config.AutoGenreCollections = true;
+        config.AutoCountryCollections = true;
+        config.SyncOnLibraryChange = true;
+        config.SyncOnStartup = true;
+        config.SettingsVersion = CurrentSettingsVersion;
+        return true;
+    }
 
     /// <summary>Delete a collection this plugin made when its rule is removed or disabled. Media files are never touched.</summary>
     public bool DeleteRemovedCollections { get; set; }

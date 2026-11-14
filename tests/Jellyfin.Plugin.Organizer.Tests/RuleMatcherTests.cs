@@ -135,3 +135,19 @@ public class HomeSortTests
         Assert.Equal(new[] { "Old", "Mid", "New" }, asc);
     }
 }
+
+public class MigrationTests
+{
+    [Fact]
+    public void OlderSettingsGetAutoCollectionsTurnedOnOnce()
+    {
+        var cfg = new PluginConfiguration { AutoGenreCollections = false, AutoCountryCollections = false, SettingsVersion = 0 };
+        Assert.True(PluginConfiguration.Migrate(cfg));
+        Assert.True(cfg.AutoGenreCollections);
+        Assert.True(cfg.AutoCountryCollections);
+        // A later choice to switch them off must stick.
+        cfg.AutoGenreCollections = false;
+        Assert.False(PluginConfiguration.Migrate(cfg));
+        Assert.False(cfg.AutoGenreCollections);
+    }
+}

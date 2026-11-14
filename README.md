@@ -9,7 +9,8 @@ Tested on Jellyfin 10.11.
 - **Rules to collections.** A rule matches movies or series by genre, tag, production country, studio, official rating, title keywords, year range or minimum rating. Example rules ship for "Filipino Movies" (country: Philippines) and "Christmas Movies" (Holiday genre, christmas tag, or christmas/santa in the title).
 - **Ordering.** Each rule picks how items are sorted inside its collection (premiere date or name) and has a Position number that sets where the collection sits among your other collections.
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
-- **Stays current.** A daily task (4 AM) and an auto-sync after new media is added put new matches in and take out items that no longer match. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
+- **Runs on its own.** A sync runs about a minute after the server starts, about two minutes after movies or shows are added or their metadata changes, and daily at 4 AM. New matches go in and items that no longer match come out. Nothing to click.
+- **Automatic genre and country collections** are on by default, so a fresh install organizes the library without any rules. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
 
 ## Settings
 
@@ -32,12 +33,12 @@ Open Dashboard and click Library Organizer in the left sidebar.
 
 **Helpers.** The "What is in my library" panel lists the genres, tags, countries, studios and ratings you actually have, with counts. Click one to add it to the field you last used. "Add from template" gives starting points such as kids and family, decades, Korean movies and Halloween.
 
-**Automatic collections.** Optionally build one collection per genre ("Comedy Movies") and/or per country ("Movies from Japan"), only when there are at least N items. A manual rule with the same name wins.
+**Automatic collections.** On by default: build one collection per genre ("Comedy Movies") and/or per country ("Movies from Japan"), only when there are at least N items. A manual rule with the same name wins, and an automatic collection with exactly the same items as one of your rules is skipped.
 
 **General.**
 
 - Remove items that stop matching.
-- Re-sync about two minutes after new movies or shows are added.
+- Re-sync about two minutes after movies or shows are added or their metadata changes, and about a minute after the server starts.
 - Delete a collection when its rule is removed or disabled (off by default; media files are never touched).
 - Minimum items for a collection, and items per home row.
 
@@ -56,7 +57,7 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 1. Download `LibraryOrganizer_<version>.zip` from the Releases page. Check it against the SHA-256 in the release notes.
 2. Unzip into `plugins/LibraryOrganizer_<version>/` inside your Jellyfin data folder.
 3. Restart Jellyfin, then open Dashboard, Plugins, Library Organizer to edit your rules.
-4. Run "Sync organizer collections" once, or wait for the nightly run.
+4. That's it. Collections build themselves about a minute after the restart. To force it, use "Save, then sync collections now" on the settings page.
 
 ## Home screen rows
 

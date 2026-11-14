@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - Runs on its own
+
+- Collections are now built without you pressing anything: about a minute after the server starts, about two minutes after movies or shows are added, and again when their metadata changes (for example after a metadata refresh).
+- The automatic genre and country collections are now on by default (only for genres and countries with at least 5 items; change that in settings). Settings saved by 0.3.x get them switched on once when you update; turn them off again if you don't want them and the choice sticks.
+- New setting "Sync about a minute after the server starts".
+- An automatic collection with exactly the same items as one of your own rules is skipped, so "Movies from Philippines" no longer appears next to "Filipino Movies".
+
 ## 0.3.0 - Much more control
 
 New

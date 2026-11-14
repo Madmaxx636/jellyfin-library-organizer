@@ -55,6 +55,14 @@ public class SyncCollectionsTask : IScheduledTask
         var taken = new HashSet<string>(config.Rules.Select(r => r.Name), StringComparer.OrdinalIgnoreCase);
         var auto = LibraryQuery.BuildAutoRules(config, items, taken);
 
+        // An automatic collection with exactly the same items as one of your rules would just be a duplicate.
+        var manualSets = manual.Select(r => LibraryQuery.Match(r, items).Select(i => i.Id).ToHashSet()).ToList();
+        auto = auto.Where(a =>
+        {
+            var ids = LibraryQuery.Match(a, items).Select(i => i.Id).ToHashSet();
+            return !manualSets.Any(m => m.SetEquals(ids));
+        }).ToList();
+
         var existing = _library.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = new[] { BaseItemKind.BoxSet },
