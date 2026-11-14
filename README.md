@@ -11,6 +11,21 @@ Tested on Jellyfin 10.11.
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
 - **Stays current.** A daily task (4 AM) adds new matches and removes items that no longer match. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
 
+## Settings
+
+Open Dashboard and click Library Organizer in the left sidebar. Each rule has these options:
+
+- **Collection name.** Also the name of the row on the home screen.
+- **Media type.** Movie, Series or Both.
+- **Combine fields.** "Any" puts an item in if any filled field matches. "All" needs every filled field to match. Several values inside one field (for example two genres) always mean "any of these".
+- **Genres, Tags, Countries, Studios, Official ratings, Title keywords.** Comma separated. Everything matches exactly except title keywords, which match anywhere in the title.
+- **Year from / to, Min rating.** Extra limits that always apply.
+- **Item order.** How items are sorted inside the collection.
+- **Position.** Lower numbers come first among your collections. 0 means no forced position.
+- **Show on home screen.** Adds the collection as a row (needs the plugins below).
+
+Global options: remove items that stop matching, minimum items before a collection is created, and items per home row. Use "Save, then sync collections now" to apply changes immediately.
+
 ## Install
 
 ### From the plugin repository (easiest)

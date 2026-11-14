@@ -32,6 +32,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         yield return new PluginPageInfo
         {
             Name = Name,
+            DisplayName = Name,
+            EnableInMainMenu = true,
+            MenuSection = "server",
+            MenuIcon = "collections_bookmark",
             EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html"
         };
     }

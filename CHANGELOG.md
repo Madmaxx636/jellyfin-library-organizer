@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - Settings are easy to find
+
+- Library Organizer now has its own entry in the dashboard sidebar. Before, the settings page only opened from a direct link, so it looked like the plugin had no settings.
+- New "Save, then sync collections now" button on the settings page, so changes show up straight away instead of at the next 4 AM run.
+
 ## 0.2.0 - Home screen rows
 
 - Each rule can now show up as a row on the home screen through the Home Screen Sections plugin. Turn it off per rule with "Show on home screen".

@@ -23,6 +23,8 @@
         <div id="rules"></div>
         <button is="emby-button" type="button" class="raised" id="addRule"><span>Add rule</span></button>
         <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+        <button is="emby-button" type="button" class="raised block" id="syncNow"><span>Save, then sync collections now</span></button>
+        <div id="syncStatus" style="margin-top:1em"></div>
       </form>
     </div>
   </div>
@@ -98,6 +100,24 @@
 
       page.querySelector('#addRule').onclick = function () {
         page.querySelector('#rules').appendChild(renderRule({ Enabled: true, Name: '', MediaType: 'Movie', Match: 'Any', ItemOrder: 'PremiereDate', ShowOnHome: true, Position: 0 }));
+      };
+
+      page.querySelector('#syncNow').onclick = function () {
+        var status = page.querySelector('#syncStatus');
+        cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
+        cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
+        cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
+        cfg.Rules = readRules();
+        status.textContent = 'Saving...';
+        ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
+          return ApiClient.getScheduledTasks();
+        }).then(function (tasks) {
+          var t = tasks.filter(function (x) { return x.Key === 'OrganizerSyncCollections'; })[0];
+          if (!t) { status.textContent = 'Saved, but the sync task was not found.'; return; }
+          return ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('ScheduledTasks/Running/' + t.Id) }).then(function () {
+            status.textContent = 'Saved. Sync started; collections update in a few seconds (see Dashboard, Scheduled Tasks).';
+          });
+        }).catch(function () { status.textContent = 'Something went wrong. Check the Jellyfin log.'; });
       };
 
       page.querySelector('#OrganizerForm').addEventListener('submit', function (e) {
