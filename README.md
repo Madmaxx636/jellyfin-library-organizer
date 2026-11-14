@@ -13,6 +13,14 @@ Tested on Jellyfin 10.11.
 
 ## Install
 
+### From the plugin repository (easiest)
+
+1. In Jellyfin, open Dashboard, Plugins, Repositories, Add.
+2. Name it anything, and use this URL: `https://raw.githubusercontent.com/Madmaxx636/jellyfin-library-organizer/main/manifest.json`
+3. Open the Catalog, find Library Organizer under General, install it, and restart Jellyfin.
+
+### Manually
+
 1. Download `LibraryOrganizer_<version>.zip` from the Releases page. Check it against the SHA-256 in the release notes.
 2. Unzip into `plugins/LibraryOrganizer_<version>/` inside your Jellyfin data folder.
 3. Restart Jellyfin, then open Dashboard, Plugins, Library Organizer to edit your rules.
