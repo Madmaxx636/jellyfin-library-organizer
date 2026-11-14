@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.3.0.0",
+        "changelog": "Leave-out fields, audio language rule, automatic genre and country collections, home row sorting, preview, templates, auto-sync after new media. Fixes default rules duplicating on every settings load.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.3.0/LibraryOrganizer_0.3.0.0.zip",
+        "checksum": "dacfd9d77477368b0ce09bde47a4ac85",
+        "timestamp": "2026-11-14T23:16:56Z"
+      },
+      {
         "version": "0.2.1.0",
         "changelog": "Settings page now has its own entry in the dashboard sidebar and a save-and-sync button.",
         "targetAbi": "10.11.0.0",
