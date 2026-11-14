@@ -51,6 +51,9 @@ public class SyncCollectionsTask : IScheduledTask
 
         var manual = config.Rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Name))
             .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        WikidataLists.Enabled = config.UsePublicDatabase;
+        await WikidataLists.EnsureAsync(manual.SelectMany(r => r.PublicGenres), _log, ct).ConfigureAwait(false);
+
         var items = LibraryQuery.MoviesAndSeries(_library);
         var taken = new HashSet<string>(config.Rules.Select(r => r.Name), StringComparer.OrdinalIgnoreCase);
         var auto = LibraryQuery.BuildAutoRules(config, items, taken);
@@ -157,15 +160,23 @@ public class SyncCollectionsTask : IScheduledTask
                 await _collections.AddToCollectionAsync(box.Id, toAdd).ConfigureAwait(false);
             }
 
-            if (config.RemoveNonMatching)
+            // Titles you excluded by hand always come out, even when "remove items that stop matching" is off.
+            var forced = RuleMatcher.ItemIds(rule.ExcludeItems);
+            var toRemove = config.RemoveNonMatching
+                ? current.Except(wanted).ToList()
+                : current.Where(id => forced.Contains(id.ToString("N"))).ToList();
+            _log.LogInformation(
+                "Rule '{Rule}': {Current} in collection, {Wanted} wanted, adding {Add}, removing {Remove}",
+                rule.Name, current.Count, wanted.Count, toAdd.Count, toRemove.Count);
+            if (toRemove.Count > 0)
             {
-                var toRemove = current.Except(wanted).ToList();
-                if (toRemove.Count > 0)
-                {
-                    await _collections.RemoveFromCollectionAsync(box.Id, toRemove).ConfigureAwait(false);
-                }
+                await _collections.RemoveFromCollectionAsync(box.Id, toRemove).ConfigureAwait(false);
             }
         }
+
+        // Adding or removing items changes the stored collection, so work on a fresh copy. Saving the older
+        // in-memory one would write the previous member list back and undo the change.
+        box = _library.GetItemById(box.Id) as BoxSet ?? box;
 
         box.DisplayOrder = rule.ItemOrder == "SortName" ? "SortName" : "PremiereDate";
 

@@ -32,6 +32,7 @@
         <h2>General</h2>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="removeNonMatching" /><span>Remove items that stop matching</span></label></div>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnChange" /><span>Re-sync a couple of minutes after movies or shows are added or their metadata changes</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="usePublic" /><span>Use the public Wikidata database for genre lists (only a genre id is sent, nothing about your library)</span></label></div>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnStart" /><span>Sync about a minute after the server starts</span></label></div>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="deleteRemoved" /><span>Delete a collection when its rule is removed or disabled (media files are never touched)</span></label></div>
         <label>Minimum items for a rule's collection <input type="number" id="minItems" min="1" style="width:5em"></label><br><br>
@@ -68,6 +69,7 @@
         { n: 'Korean movies', r: { Languages: ['Korean'], Countries: ['South Korea'], Match: 'Any' } },
         { n: 'Japanese anime', r: { Countries: ['Japan'], Genres: ['Animation'], Match: 'All' } },
         { n: 'Tagalog / Filipino audio', r: { Languages: ['Filipino'] } },
+        { n: 'Christmas (curated)', r: { PublicGenres: ['Q28026639|Christmas film'], Genres: ['Holiday'], Tags: ['christmas'], MinFieldMatches: 2 } },
         { n: 'Halloween', r: { Tags: ['halloween'], TitleKeywords: ['halloween'], Genres: ['Horror'], Match: 'Any' } },
         { n: 'Documentaries', r: { Genres: ['Documentary'] } },
         { n: 'Recently added', r: { HomeSort: 'DateAdded' } }
@@ -92,8 +94,19 @@
           '<label>Collection name<br><input type="text" data-k="Name" value="' + esc(r.Name) + '" style="width:100%"></label><br><br>' +
           '<label>Media type ' + sel('MediaType', ['Movie', 'Series', 'Both'], r.MediaType || 'Movie') + '</label> ' +
           '<label>Combine fields ' + sel('Match', ['Any', 'All'], r.Match || 'Any') + '</label> ' +
+          '<label title="Stricter: an item needs this many of your filled-in fields to match. Two fixes most stray-tag false positives.">Fields that must match <select data-num="MinFieldMatches">' +
+          [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + (n === (r.MinFieldMatches || 1) ? ' selected' : '') + '>' + (n === 1 ? '1 (any)' : 'at least ' + n) + '</option>'; }).join('') + '</select></label> ' +
           '<label>Position <input type="number" data-num="Position" value="' + esc(r.Position || 0) + '" style="width:5em"></label><br><br>';
         listFields.forEach(function (f) { h += textList(f, r); });
+        h += '<div style="margin:.6em 0"><b>Public database lists</b> <span style="opacity:.7">(Wikidata genres; a title on the list counts as a match)</span>' +
+          '<div class="pubList"></div>' +
+          '<input type="text" class="pubFind" placeholder="Search a genre, e.g. Christmas film" style="width:100%;margin-top:.3em">' +
+          '<div class="pubResults"></div></div>';
+        h += '<details class="fixes" style="margin:.8em 0"' + (((r.ExcludeItems || []).length || (r.IncludeItems || []).length) ? ' open' : '') + '><summary>Corrections: never / always include specific titles</summary>' +
+          '<div style="margin:.5em 0"><b>Never in this collection:</b><div class="exclList"></div></div>' +
+          '<div style="margin:.5em 0"><b>Always in this collection:</b><div class="inclList"></div></div>' +
+          '<label style="display:block;margin:.5em 0">Find a title to correct<br><input type="text" class="findBox" placeholder="Type a movie or show name" style="width:100%"></label>' +
+          '<div class="findResults"></div></details>';
         h += '<details style="margin:.8em 0"><summary>Leave out</summary>';
         excludeFields.forEach(function (f) { h += textList(f, r); });
         h += '</details>';
@@ -105,9 +118,15 @@
           '<label>sorted by ' + sel('HomeSort', sortChoices, r.HomeSort || 'PremiereDate') + '</label> ' +
           '<label><input type="checkbox" data-k="HomeDescending"' + (r.HomeDescending !== false ? ' checked' : '') + '> highest / newest first</label><br><br>' +
           '<button type="button" class="preview">Preview matches</button> <span class="previewCount"></span>' +
-          '<div class="previewList" style="margin-top:.5em;font-size:.9em;opacity:.85"></div>' +
+          '<div class="previewList" style="margin-top:.5em;font-size:.9em"></div>' +
           '</fieldset>';
         var node = el(h);
+        node._pub = (r.PublicGenres || []).slice();
+        node._excl = (r.ExcludeItems || []).slice();
+        node._incl = (r.IncludeItems || []).slice();
+        renderLists(node);
+        wireSearch(node);
+        wirePublic(node);
         node.querySelector('.del').onclick = function () { node.remove(); };
         node.querySelectorAll('[data-list]').forEach(function (i) { i.onfocus = function () { lastList = i; }; });
         node.querySelector('.preview').onclick = function () { preview(node); };
@@ -121,20 +140,115 @@
           r[i.dataset.list] = i.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
         });
         n.querySelectorAll('[data-num]').forEach(function (i) { r[i.dataset.num] = i.value === '' ? null : Number(i.value); });
+        r.PublicGenres = (n._pub || []).slice();
+        r.ExcludeItems = (n._excl || []).slice();
+        r.IncludeItems = (n._incl || []).slice();
+        r.MinFieldMatches = r.MinFieldMatches || 1;
         r.Position = r.Position || 0;
         return r;
       }
       function readRules() { return Array.prototype.map.call(page.querySelectorAll('.rule'), readRule); }
 
+      function entryId(e) { return String(e).split('|')[0]; }
+      function entryLabel(e) { var p = String(e).split('|'); return p.slice(1).join('|') || p[0]; }
+      function makeEntry(id, name, year) { return id + '|' + name + (year ? ' (' + year + ')' : ''); }
+      function without(list, id) { return list.filter(function (e) { return entryId(e) !== id; }); }
+      function has(list, id) { return list.some(function (e) { return entryId(e) === id; }); }
+
+      function chipList(box, list, node, kind) {
+        box.innerHTML = '';
+        if (!list.length) { box.appendChild(el('<div style="opacity:.6;font-size:.9em">None</div>')); return; }
+        list.forEach(function (e) {
+          var row = el('<div style="margin:.2em 0"><span>' + esc(entryLabel(e)) + '</span> <a href="#" style="margin-left:.6em">undo</a></div>');
+          row.querySelector('a').onclick = function (ev) {
+            ev.preventDefault();
+            node[kind] = without(node[kind], entryId(e));
+            renderLists(node);
+          };
+          box.appendChild(row);
+        });
+      }
+      function wirePublic(node) {
+        var box = node.querySelector('.pubFind'), out = node.querySelector('.pubResults'), timer = null;
+        box.addEventListener('input', function () {
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            var q = box.value.trim();
+            if (q.length < 3) { out.innerHTML = ''; return; }
+            ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('LibraryOrganizer/WikidataSearch', { q: q }), dataType: 'json' }).then(function (hits) {
+              out.innerHTML = '';
+              hits.forEach(function (h) {
+                var row = el('<div style="margin:.3em 0"><b>' + esc(h.Label) + '</b> <span style="opacity:.7">' + esc(h.Description || '') +
+                  '</span> <button type="button" style="margin-left:.6em">Add</button></div>');
+                row.querySelector('button').onclick = function () {
+                  if (!has(node._pub, h.Id)) { node._pub.push(h.Id + '|' + h.Label); }
+                  renderLists(node); out.innerHTML = ''; box.value = '';
+                };
+                out.appendChild(row);
+              });
+              if (!hits.length) { out.textContent = 'Nothing found.'; }
+            }).catch(function () { out.textContent = 'Could not reach Wikidata.'; });
+          }, 400);
+        });
+      }
+
+      function renderLists(node) {
+        chipList(node.querySelector('.pubList'), node._pub, node, '_pub');
+        chipList(node.querySelector('.exclList'), node._excl, node, '_excl');
+        chipList(node.querySelector('.inclList'), node._incl, node, '_incl');
+      }
+      function correct(node, kind, id, name, year) {
+        var other = kind === '_excl' ? '_incl' : '_excl';
+        node[other] = without(node[other], id);
+        if (!has(node[kind], id)) { node[kind].push(makeEntry(id, name, year)); }
+        renderLists(node);
+        node.querySelector('details.fixes').open = true;
+      }
+
+      function wireSearch(node) {
+        var box = node.querySelector('.findBox'), out = node.querySelector('.findResults'), timer = null;
+        box.addEventListener('input', function () {
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            var q = box.value.trim();
+            if (q.length < 2) { out.innerHTML = ''; return; }
+            ApiClient.getItems(ApiClient.getCurrentUserId(), {
+              searchTerm: q, IncludeItemTypes: 'Movie,Series', Recursive: true, Limit: 8, Fields: 'ProductionYear'
+            }).then(function (res) {
+              out.innerHTML = '';
+              (res.Items || []).forEach(function (it) {
+                var row = el('<div style="margin:.3em 0"><span>' + esc(it.Name) + (it.ProductionYear ? ' (' + it.ProductionYear + ')' : '') +
+                  '</span> <button type="button" class="never" style="margin-left:.6em">Never include</button> <button type="button" class="always">Always include</button></div>');
+                var id = String(it.Id).replace(/-/g, '');
+                row.querySelector('.never').onclick = function () { correct(node, '_excl', id, it.Name, it.ProductionYear); };
+                row.querySelector('.always').onclick = function () { correct(node, '_incl', id, it.Name, it.ProductionYear); };
+                out.appendChild(row);
+              });
+              if (!(res.Items || []).length) { out.textContent = 'Nothing found.'; }
+            });
+          }, 300);
+        });
+      }
+
       function preview(node) {
         var count = node.querySelector('.previewCount'), list = node.querySelector('.previewList');
-        count.textContent = 'Checking...'; list.textContent = '';
+        count.textContent = 'Checking...'; list.innerHTML = '';
         ApiClient.ajax({
           type: 'POST', url: ApiClient.getUrl('LibraryOrganizer/Preview'),
           data: JSON.stringify(readRule(node)), contentType: 'application/json', dataType: 'json'
         }).then(function (res) {
-          count.textContent = res.Count + ' match' + (res.Count === 1 ? '' : 'es');
-          list.textContent = res.Items.join(' · ') + (res.Count > res.Items.length ? ' ...' : '');
+          count.textContent = res.Count + ' match' + (res.Count === 1 ? '' : 'es') + (res.Count > res.Items.length ? ' (showing ' + res.Items.length + ')' : '');
+          res.Items.forEach(function (it) {
+            var row = el('<div style="margin:.35em 0"><b>' + esc(it.Name) + (it.Year ? ' (' + it.Year + ')' : '') + '</b> ' +
+              '<span style="opacity:.75">' + esc((it.Why || []).join(', ')) + '</span> ' +
+              '<button type="button" class="notThis" style="margin-left:.6em">Not a match</button></div>');
+            row.querySelector('.notThis').onclick = function () {
+              correct(node, '_excl', it.Id, it.Name, it.Year);
+              row.style.textDecoration = 'line-through'; row.style.opacity = '.5';
+              row.querySelector('.notThis').remove();
+            };
+            list.appendChild(row);
+          });
         }).catch(function () { count.textContent = 'Preview failed. Check the Jellyfin log.'; });
       }
 
@@ -160,6 +274,7 @@
         cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
         cfg.SyncOnLibraryChange = page.querySelector('#syncOnChange').checked;
         cfg.SyncOnStartup = page.querySelector('#syncOnStart').checked;
+        cfg.UsePublicDatabase = page.querySelector('#usePublic').checked;
         cfg.DeleteRemovedCollections = page.querySelector('#deleteRemoved').checked;
         cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
         cfg.AutoCountryCollections = page.querySelector('#autoCountry').checked;
@@ -180,6 +295,7 @@
           page.querySelector('#removeNonMatching').checked = c.RemoveNonMatching;
           page.querySelector('#syncOnChange').checked = c.SyncOnLibraryChange;
           page.querySelector('#syncOnStart').checked = c.SyncOnStartup;
+          page.querySelector('#usePublic').checked = c.UsePublicDatabase;
           page.querySelector('#deleteRemoved').checked = c.DeleteRemovedCollections;
           page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
           page.querySelector('#autoCountry').checked = c.AutoCountryCollections;

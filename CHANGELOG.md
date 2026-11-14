@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.0 - Fixing false positives
+
+Fixed
+- **Items never actually left a collection.** The sync removed them and then saved an out-of-date copy of the collection, which put them straight back. A title that stopped matching, or that you excluded, now really comes out on the next sync. Every earlier version had this bug.
+- The stock Christmas Movies rule put hundreds of unrelated titles in (James Bond, Mary Poppins, anything with a stray "christmas" tag or "santa" in the title). See below.
+
+New
+- **Public database lists (Wikidata).** A rule can use curated genre lists from Wikidata, such as every film with the genre "Christmas film" (about 1,700 titles, matched by IMDb or TMDB id). A title on the list counts as a match by itself. Search for any genre by name on the rule. Needs internet; only a genre id is sent, nothing about your library. The list is cached for a week and the last copy is used if Wikidata can't be reached. Turn it off with "Use the public Wikidata database" in settings.
+- **Corrections.** Each rule has a "Corrections" section: titles you mark "Never include" are always left out, and "Always include" adds titles the rule misses. Search for a title there, or click "Not a match" in the preview.
+- **Preview shows why** each title matched (genre, tag, title word, public database).
+- **Fields that must match.** Require 2 or 3 of your filled-in fields instead of just 1, so one stray tag is no longer enough.
+- A "Christmas (curated)" template.
+
+Changed
+- The stock Christmas Movies rule now needs the Wikidata "Christmas film" list, or two of genre, tag and title word. It is updated once when you upgrade, only if you haven't changed it. If you had edited it, adjust it by hand: set "Fields that must match" to 2 and add the "Christmas film" public list.
+- The sync logs what it adds and removes for every rule.
+
 ## 0.4.0 - Runs on its own
 
 - Collections are now built without you pressing anything: about a minute after the server starts, about two minutes after movies or shows are added, and again when their metadata changes (for example after a metadata refresh).

@@ -9,8 +9,31 @@ namespace Jellyfin.Plugin.Organizer;
 
 public static class RuleMatcher
 {
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<string[], HashSet<string>> IdCache = new();
+
+    /// <summary>Item ids from entries like "id|Name (year)", in 32-character form.</summary>
+    public static HashSet<string> ItemIds(string[]? entries)
+    {
+        if (entries is null || entries.Length == 0) return new HashSet<string>();
+        return IdCache.GetValue(entries, e =>
+        {
+            var set = new HashSet<string>();
+            foreach (var entry in e)
+            {
+                var id = (entry ?? string.Empty).Split('|')[0].Trim();
+                if (Guid.TryParse(id, out var g)) set.Add(g.ToString("N"));
+            }
+
+            return set;
+        });
+    }
+
     public static bool Matches(CollectionRule rule, BaseItem item)
     {
+        var itemId = item.Id.ToString("N");
+        if (ItemIds(rule.ExcludeItems).Contains(itemId)) return false;
+        if (ItemIds(rule.IncludeItems).Contains(itemId)) return true;
+
         if (AnyEq(rule.ExcludeGenres, item.Genres)
             || AnyEq(rule.ExcludeTags, item.Tags)
             || AnyEq(rule.ExcludeCountries, item.ProductionLocations)
@@ -24,7 +47,20 @@ public static class RuleMatcher
         if (rule.YearTo is int to && (year is null || year > to)) return false;
         if (rule.MinCommunityRating is double min && (item.CommunityRating ?? 0) < min) return false;
 
+        var pub = Clean(rule.PublicGenres);
+        var publicHit = pub.Any(e => WikidataLists.Contains(WikidataLists.Qid(e), item));
+        var all = string.Equals(rule.Match, "All", StringComparison.OrdinalIgnoreCase);
+        if (publicHit && !all)
+        {
+            return true;
+        }
+
         var checks = new List<bool>();
+        if (pub.Length > 0 && all)
+        {
+            checks.Add(publicHit);
+        }
+
         AddCheck(checks, rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
         AddCheck(checks, rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
         AddCheck(checks, rule.Countries, v => item.ProductionLocations.Any(c => Eq(c, v)));
@@ -38,15 +74,53 @@ public static class RuleMatcher
 
         if (checks.Count == 0)
         {
+            if (pub.Length > 0)
+            {
+                return false;
+            }
+
             // Only limits or exclusions were set; they already passed.
             return rule.YearFrom is not null || rule.YearTo is not null || rule.MinCommunityRating is not null
                    || Clean(rule.ExcludeGenres).Length + Clean(rule.ExcludeTags).Length
                    + Clean(rule.ExcludeCountries).Length + Clean(rule.ExcludeKeywords).Length > 0;
         }
 
-        return string.Equals(rule.Match, "All", StringComparison.OrdinalIgnoreCase)
-            ? checks.All(c => c)
-            : checks.Any(c => c);
+        var hits = checks.Count(c => c);
+        var needed = all
+            ? checks.Count
+            : Math.Clamp(rule.MinFieldMatches, 1, checks.Count);
+        return hits >= needed;
+    }
+
+    /// <summary>Plain-language reasons an item matched, for the preview.</summary>
+    public static List<string> Explain(CollectionRule rule, BaseItem item)
+    {
+        var why = new List<string>();
+        var id = item.Id.ToString("N");
+        if (ItemIds(rule.IncludeItems).Contains(id)) why.Add("always included by you");
+
+        void Hits(string label, string[] wanted, Func<string, bool> test)
+        {
+            foreach (var w in Clean(wanted).Where(test)) why.Add($"{label}: {w}");
+        }
+
+        foreach (var e in Clean(rule.PublicGenres).Where(e => WikidataLists.Contains(WikidataLists.Qid(e), item)))
+        {
+            why.Add($"public database: {WikidataLists.Label(e)}");
+        }
+
+        Hits("genre", rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
+        Hits("tag", rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
+        Hits("country", rule.Countries, v => item.ProductionLocations.Any(c => Eq(c, v)));
+        Hits("studio", rule.Studios, v => item.Studios.Any(s => Eq(s, v)));
+        Hits("rating", rule.OfficialRatings, v => Eq(item.OfficialRating, v));
+        Hits("title word", rule.TitleKeywords, v => Contains(item.Name, v));
+        if (Clean(rule.Languages).Length > 0 && Languages.AnyMatch(AudioLanguages(item), rule.Languages))
+        {
+            why.Add("audio language");
+        }
+
+        return why;
     }
 
     private static IEnumerable<string?> AudioLanguages(BaseItem item)

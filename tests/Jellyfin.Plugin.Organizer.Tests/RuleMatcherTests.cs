@@ -151,3 +151,159 @@ public class MigrationTests
         Assert.False(cfg.AutoGenreCollections);
     }
 }
+
+public class CorrectionTests
+{
+    private static Movie Film(string name, string[]? genres = null, string[]? tags = null) =>
+        new() { Id = Guid.NewGuid(), Name = name, ProductionYear = 2000, Genres = genres ?? Array.Empty<string>(), Tags = tags ?? Array.Empty<string>() };
+
+    private static CollectionRule Christmas() => new()
+    {
+        Genres = new[] { "Holiday" }, Tags = new[] { "christmas" }, TitleKeywords = new[] { "christmas" }
+    };
+
+    [Fact]
+    public void NeverIncludeBeatsEverythingElse()
+    {
+        var bond = Film("Casino Royale", new[] { "Action" }, new[] { "christmas" });
+        var rule = Christmas();
+        Assert.True(RuleMatcher.Matches(rule, bond));
+        rule.ExcludeItems = new[] { bond.Id.ToString("N") + "|Casino Royale (2000)" };
+        Assert.False(RuleMatcher.Matches(rule, bond));
+    }
+
+    [Fact]
+    public void AlwaysIncludeWorksEvenWithNoMatchingFields()
+    {
+        var odd = Film("Die Hard", new[] { "Action" });
+        var rule = Christmas();
+        Assert.False(RuleMatcher.Matches(rule, odd));
+        rule.IncludeItems = new[] { odd.Id.ToString("D") + "|Die Hard (1988)" };
+        Assert.True(RuleMatcher.Matches(rule, odd));
+    }
+
+    [Fact]
+    public void RequiringTwoFieldsDropsStrayTags()
+    {
+        var rule = Christmas();
+        rule.MinFieldMatches = 2;
+        var bond = Film("Casino Royale", new[] { "Action" }, new[] { "christmas" });
+        var elf = Film("Elf", new[] { "Holiday" }, new[] { "christmas" });
+        var polar = Film("The Christmas Express", new[] { "Holiday" });
+        Assert.False(RuleMatcher.Matches(rule, bond));
+        Assert.True(RuleMatcher.Matches(rule, elf));
+        Assert.True(RuleMatcher.Matches(rule, polar));
+    }
+
+    [Fact]
+    public void ExplainNamesTheSignals()
+    {
+        var elf = Film("Elf", new[] { "Holiday" }, new[] { "Christmas" });
+        var why = RuleMatcher.Explain(Christmas(), elf);
+        Assert.Contains("genre: Holiday", why);
+        Assert.Contains("tag: christmas", why);
+    }
+}
+
+public class ChristmasMigrationTests
+{
+    [Fact]
+    public void StockChristmasRuleBecomesStricterOnce()
+    {
+        var cfg = new PluginConfiguration { SettingsVersion = 2, Rules = PluginConfiguration.DefaultRules() };
+        var stock = cfg.Rules.First(r => r.Name == "Christmas Movies");
+        stock.MinFieldMatches = 1;
+        stock.PublicGenres = Array.Empty<string>();
+        Assert.True(PluginConfiguration.Migrate(cfg));
+        Assert.Equal(2, cfg.Rules.First(r => r.Name == "Christmas Movies").MinFieldMatches);
+    }
+
+    [Fact]
+    public void CustomisedChristmasRuleIsLeftAlone()
+    {
+        var cfg = new PluginConfiguration { SettingsVersion = 2, Rules = PluginConfiguration.DefaultRules() };
+        var r = cfg.Rules.First(x => x.Name == "Christmas Movies");
+        r.MinFieldMatches = 1; r.Match = "All";
+        PluginConfiguration.Migrate(cfg);
+        Assert.Equal(1, r.MinFieldMatches);
+    }
+}
+
+public class PublicDatabaseTests
+{
+    private const string Q = "Q28026639";
+
+    private static Movie Film(string name, string imdb, string[]? genres = null, string[]? tags = null)
+    {
+        var m = new Movie { Id = Guid.NewGuid(), Name = name, Genres = genres ?? Array.Empty<string>(), Tags = tags ?? Array.Empty<string>() };
+        m.ProviderIds["Imdb"] = imdb;
+        return m;
+    }
+
+    private static CollectionRule Rule(string match = "Any") => new()
+    {
+        Match = match, MinFieldMatches = 2, PublicGenres = new[] { Q + "|Christmas film" },
+        Genres = new[] { "Holiday" }, Tags = new[] { "christmas" }
+    };
+
+    public PublicDatabaseTests()
+    {
+        WikidataLists.Enabled = true;
+        WikidataLists.Seed(Q, new[] { "tt0319343", "tt0338348" }, new[] { "10719" }, Array.Empty<string>());
+    }
+
+    [Fact]
+    public void ListedTitleMatchesWithoutAnyTag()
+    {
+        Assert.True(RuleMatcher.Matches(Rule(), Film("Elf", "tt0319343")));
+    }
+
+    [Fact]
+    public void UnlistedTitleWithOneStrayTagIsRejected()
+    {
+        Assert.False(RuleMatcher.Matches(Rule(), Film("Casino Royale", "tt0381061", tags: new[] { "christmas" })));
+    }
+
+    [Fact]
+    public void UnlistedTitleStillQualifiesWithTwoLocalSignals()
+    {
+        Assert.True(RuleMatcher.Matches(Rule(), Film("Home Alone", "tt0099785", new[] { "Holiday" }, new[] { "christmas" })));
+    }
+
+    [Fact]
+    public void TmdbMovieIdsDoNotCollideWithTvIds()
+    {
+        var m = new Movie { Id = Guid.NewGuid(), Name = "X" };
+        m.ProviderIds["Tmdb"] = "10719";
+        var s = new MediaBrowser.Controller.Entities.TV.Series { Id = Guid.NewGuid(), Name = "Y" };
+        s.ProviderIds["Tmdb"] = "10719";
+        Assert.True(WikidataLists.Contains(Q, m));
+        Assert.False(WikidataLists.Contains(Q, s));
+    }
+
+    [Fact]
+    public void OnlyPublicListAndNoHitMatchesNothing()
+    {
+        var rule = new CollectionRule { PublicGenres = new[] { Q + "|Christmas film" } };
+        Assert.False(RuleMatcher.Matches(rule, Film("Die Hard", "tt0095016")));
+        Assert.True(RuleMatcher.Matches(rule, Film("Elf", "tt0319343")));
+    }
+
+    [Fact]
+    public void SwitchingTheDatabaseOffIgnoresTheList()
+    {
+        WikidataLists.Enabled = false;
+        try { Assert.False(RuleMatcher.Matches(Rule(), Film("Elf", "tt0319343"))); }
+        finally { WikidataLists.Enabled = true; }
+    }
+
+    [Fact]
+    public void StockChristmasRuleGetsThePublicListOnMigration()
+    {
+        var cfg = new PluginConfiguration { SettingsVersion = 3, Rules = PluginConfiguration.DefaultRules() };
+        var r = cfg.Rules.First(x => x.Name == "Christmas Movies");
+        r.PublicGenres = Array.Empty<string>();
+        Assert.True(PluginConfiguration.Migrate(cfg));
+        Assert.Contains(PluginConfiguration.ChristmasFilm, r.PublicGenres);
+    }
+}

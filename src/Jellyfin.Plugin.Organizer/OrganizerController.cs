@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Jellyfin.Plugin.Organizer.Configuration;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +19,9 @@ public record LibraryValues(
     List<ValueCount> Studios,
     List<ValueCount> Ratings);
 
-public record PreviewResult(int Count, List<string> Items);
+public record PreviewItem(string Id, string Name, int? Year, List<string> Why);
+
+public record PreviewResult(int Count, List<PreviewItem> Items);
 
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
@@ -49,16 +53,36 @@ public class OrganizerController : ControllerBase
             Count(items.Select(i => i.OfficialRating)));
     }
 
+    /// <summary>Looks up genres on Wikidata by name for the settings page.</summary>
+    [HttpGet("WikidataSearch")]
+    public async Task<ActionResult<List<WikidataHit>>> WikidataSearch([FromQuery] string q, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(q) || !WikidataLists.Enabled)
+        {
+            return new List<WikidataHit>();
+        }
+
+        try
+        {
+            return await WikidataLists.Search(q.Trim(), ct).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            return StatusCode(502, "Could not reach Wikidata");
+        }
+    }
+
     /// <summary>Shows what a rule would match right now, without changing anything.</summary>
     [HttpPost("Preview")]
-    public ActionResult<PreviewResult> Preview([FromBody] CollectionRule rule)
+    public async Task<ActionResult<PreviewResult>> Preview([FromBody] CollectionRule rule, CancellationToken ct)
     {
+        await WikidataLists.EnsureAsync(rule.PublicGenres, null, ct).ConfigureAwait(false);
         var matched = LibraryQuery.Match(rule, LibraryQuery.MoviesAndSeries(_library));
-        var names = matched
-            .Select(i => i.ProductionYear is int y ? $"{i.Name} ({y})" : i.Name)
-            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
-            .Take(200)
+        var items = matched
+            .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
+            .Take(500)
+            .Select(i => new PreviewItem(i.Id.ToString("N"), i.Name, i.ProductionYear, RuleMatcher.Explain(rule, i)))
             .ToList();
-        return new PreviewResult(matched.Count, names);
+        return new PreviewResult(matched.Count, items);
     }
 }

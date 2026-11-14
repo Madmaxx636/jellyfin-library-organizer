@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.Organizer.Configuration;
@@ -31,6 +32,21 @@ public class CollectionRule
     public string[] ExcludeCountries { get; set; } = Array.Empty<string>();
     public string[] ExcludeKeywords { get; set; } = Array.Empty<string>();
 
+    /// <summary>How many of the filled-in fields must match (1 = any one). Ignored when Match is "All".</summary>
+    public int MinFieldMatches { get; set; } = 1;
+
+    /// <summary>
+    /// Public database (Wikidata) genres, as "Q-id|Label". A title on one of these lists counts as a match
+    /// by itself, or as one field when "Combine fields" is "All".
+    /// </summary>
+    public string[] PublicGenres { get; set; } = Array.Empty<string>();
+
+    /// <summary>Titles to never include, as "id|Name (year)". Wins over every other setting.</summary>
+    public string[] ExcludeItems { get; set; } = Array.Empty<string>();
+
+    /// <summary>Titles to always include, as "id|Name (year)".</summary>
+    public string[] IncludeItems { get; set; } = Array.Empty<string>();
+
     public int? YearFrom { get; set; }
     public int? YearTo { get; set; }
     public double? MinCommunityRating { get; set; }
@@ -58,6 +74,8 @@ public class PluginConfiguration : BasePluginConfiguration
 
     public bool DefaultsSeeded { get; set; }
 
+    public const string ChristmasFilm = "Q28026639|Christmas film";
+
     public static List<CollectionRule> DefaultRules() => new()
     {
         new()
@@ -72,6 +90,8 @@ public class PluginConfiguration : BasePluginConfiguration
             Genres = new[] { "Holiday" },
             Tags = new[] { "christmas", "xmas" },
             TitleKeywords = new[] { "christmas", "xmas", "santa" },
+            MinFieldMatches = 2,
+            PublicGenres = new[] { ChristmasFilm },
             ItemOrder = "SortName",
             HomeSort = "SortName",
             HomeDescending = false,
@@ -104,15 +124,23 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Re-sync a couple of minutes after movies or shows are added or their metadata changes.</summary>
     public bool SyncOnLibraryChange { get; set; } = true;
 
+    /// <summary>Look up curated lists on Wikidata (only a genre id leaves the server). Turn off for fully offline use.</summary>
+    public bool UsePublicDatabase { get; set; } = true;
+
     /// <summary>Run a sync about a minute after the server starts.</summary>
     public bool SyncOnStartup { get; set; } = true;
 
     /// <summary>Bumped when a new version needs to change older saved settings once.</summary>
     public int SettingsVersion { get; set; }
 
-    public const int CurrentSettingsVersion = 2;
+    public const int CurrentSettingsVersion = 4;
 
-    /// <summary>Version 2 turned the automatic genre and country collections and both auto-syncs on by default.</summary>
+    /// <summary>
+    /// Version 2 turned the automatic genre and country collections and both auto-syncs on by default.
+    /// Versions 3 and 4 tightened the stock Christmas rule: a single stray "christmas" tag put hundreds of
+    /// unrelated titles in it, so it now needs two of genre, tag and title word, or a place on the
+    /// Wikidata "Christmas film" list.
+    /// </summary>
     public static bool Migrate(PluginConfiguration config)
     {
         if (config.SettingsVersion >= CurrentSettingsVersion)
@@ -120,10 +148,29 @@ public class PluginConfiguration : BasePluginConfiguration
             return false;
         }
 
-        config.AutoGenreCollections = true;
-        config.AutoCountryCollections = true;
-        config.SyncOnLibraryChange = true;
-        config.SyncOnStartup = true;
+        if (config.SettingsVersion < 2)
+        {
+            config.AutoGenreCollections = true;
+            config.AutoCountryCollections = true;
+            config.SyncOnLibraryChange = true;
+            config.SyncOnStartup = true;
+        }
+
+        foreach (var rule in config.Rules)
+        {
+            var stock = string.Equals(rule.Name, "Christmas Movies", StringComparison.OrdinalIgnoreCase)
+                        && rule.MinFieldMatches <= 2
+                        && rule.Match != "All"
+                        && rule.ExcludeItems.Length == 0
+                        && rule.PublicGenres.Length == 0
+                        && rule.Tags.Any(t => string.Equals(t, "christmas", StringComparison.OrdinalIgnoreCase));
+            if (stock)
+            {
+                rule.MinFieldMatches = 2;
+                rule.PublicGenres = new[] { ChristmasFilm };
+            }
+        }
+
         config.SettingsVersion = CurrentSettingsVersion;
         return true;
     }

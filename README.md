@@ -20,7 +20,10 @@ Open Dashboard and click Library Organizer in the left sidebar.
 
 - **Collection name.** Also the name of its home screen row.
 - **Media type.** Movie, Series or Both.
-- **Combine fields.** "Any" puts an item in if any filled field matches. "All" needs every filled field to match. Several values inside one field (two genres, say) always mean "any of these".
+- **Combine fields.** "Any" puts an item in if enough filled fields match. "All" needs every filled field to match. Several values inside one field (two genres, say) always mean "any of these".
+- **Fields that must match.** With "Any", how many filled fields an item needs (1, 2 or 3). Setting 2 stops a single stray tag from putting an item in.
+- **Public database lists.** Curated genre lists from Wikidata, for example "Christmas film". A title on the list counts as a match by itself (or as one field when Combine is "All"). Search for a genre by name and click Add.
+- **Corrections.** "Never include" and "Always include" for individual titles. Search for a title, or click "Not a match" next to it in the preview. These win over every other setting.
 - **Genres, Tags, Countries, Studios, Official ratings.** Comma separated, matched exactly (ignoring case).
 - **Title keywords.** Matched anywhere in the title.
 - **Audio languages.** Names or codes: Korean, ko and kor are the same. Movies only, read from the audio tracks.
@@ -29,7 +32,7 @@ Open Dashboard and click Library Organizer in the left sidebar.
 - **Order on the collection page.** Premiere date or name.
 - **Position.** Lower numbers come first among your collections. 0 means no forced position.
 - **Show on home screen, sorted by.** Newest, name, rating, date added or random, in either direction.
-- **Preview matches.** Shows what the rule matches right now without changing anything.
+- **Preview matches.** Shows what the rule matches right now, and why each title matched, without changing anything. Click "Not a match" to exclude a title.
 
 **Helpers.** The "What is in my library" panel lists the genres, tags, countries, studios and ratings you actually have, with counts. Click one to add it to the field you last used. "Add from template" gives starting points such as kids and family, decades, Korean movies and Halloween.
 
@@ -58,6 +61,10 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 2. Unzip into `plugins/LibraryOrganizer_<version>/` inside your Jellyfin data folder.
 3. Restart Jellyfin, then open Dashboard, Plugins, Library Organizer to edit your rules.
 4. That's it. Collections build themselves about a minute after the restart. To force it, use "Save, then sync collections now" on the settings page.
+
+## Privacy
+
+The only thing that leaves your server is a request to Wikidata (query.wikidata.org and www.wikidata.org) for a genre list or a genre search, and it contains just the genre id or the text you typed. Nothing about your library is sent. Turn it off with "Use the public Wikidata database" in settings; rules that use a public list then fall back to their other fields.
 
 ## Home screen rows
 

@@ -15,6 +15,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
+        WikidataLists.CacheDirectory = System.IO.Path.Combine(applicationPaths.CachePath, "library-organizer");
 
         // A config written by an older version may hold duplicated default rules; keep the first of each name.
         var distinct = Configuration.Rules
@@ -33,6 +34,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         }
 
         changed |= PluginConfiguration.Migrate(Configuration);
+        WikidataLists.Enabled = Configuration.UsePublicDatabase;
 
         if (changed)
         {
@@ -40,7 +42,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         }
 
         ConfigurationChanged += (_, _) =>
+        {
+            WikidataLists.Enabled = Configuration.UsePublicDatabase;
             HomeSections.Register(Configuration, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+        };
     }
 
     public static Plugin? Instance { get; private set; }
