@@ -8,7 +8,6 @@ using Jellyfin.Plugin.Organizer.Configuration;
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
@@ -47,20 +46,14 @@ public class SyncCollectionsTask : IScheduledTask
 
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken ct)
     {
-        var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
-        var rules = config.Rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Name)).ToList();
-        if (rules.Count == 0)
-        {
-            progress.Report(100);
-            return;
-        }
+        var plugin = Plugin.Instance;
+        var config = plugin?.Configuration ?? new PluginConfiguration();
 
-        var items = _library.GetItemList(new InternalItemsQuery
-        {
-            IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
-            Recursive = true,
-            IsVirtualItem = false
-        });
+        var manual = config.Rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Name))
+            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        var items = LibraryQuery.MoviesAndSeries(_library);
+        var taken = new HashSet<string>(config.Rules.Select(r => r.Name), StringComparer.OrdinalIgnoreCase);
+        var auto = LibraryQuery.BuildAutoRules(config, items, taken);
 
         var existing = _library.GetItemList(new InternalItemsQuery
         {
@@ -68,46 +61,70 @@ public class SyncCollectionsTask : IScheduledTask
             Recursive = true
         }).OfType<BoxSet>().ToList();
 
-        for (var i = 0; i < rules.Count; i++)
+        var all = manual.Select(r => (Rule: r, Min: config.MinItems))
+            .Concat(auto.Select(r => (Rule: r, Min: config.AutoMinItems)))
+            .ToList();
+
+        var managed = new List<string>();
+        for (var i = 0; i < all.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
             try
             {
-                await ApplyRule(rules[i], items, existing, config, ct).ConfigureAwait(false);
+                if (await ApplyRule(all[i].Rule, all[i].Min, items, existing, config, ct).ConfigureAwait(false))
+                {
+                    managed.Add(all[i].Rule.Name);
+                }
             }
             catch (Exception ex)
             {
-                _log.LogError(ex, "Organizer rule '{Rule}' failed", rules[i].Name);
+                _log.LogError(ex, "Organizer rule '{Rule}' failed", all[i].Rule.Name);
             }
 
-            progress.Report((i + 1) * 100.0 / rules.Count);
+            progress.Report((i + 1) * 100.0 / Math.Max(1, all.Count));
         }
 
+        if (config.DeleteRemovedCollections)
+        {
+            var current = new HashSet<string>(all.Select(a => a.Rule.Name), StringComparer.OrdinalIgnoreCase);
+            foreach (var name in config.ManagedCollectionNames.Where(n => !current.Contains(n)))
+            {
+                var box = existing.FirstOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (box is null) continue;
+                _library.DeleteItem(box, new DeleteOptions { DeleteFileLocation = false });
+                _log.LogInformation("Deleted collection '{Name}' because its rule is gone", name);
+            }
+        }
+
+        // Keep names of removed rules while deletion is off, so turning it on later still cleans up.
+        var keep = config.DeleteRemovedCollections
+            ? new List<string>()
+            : config.ManagedCollectionNames.Where(n => !managed.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList();
+        config.ManagedCollectionNames = managed.Concat(keep).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        config.AutoRules = auto;
+        plugin?.SaveConfiguration();
+
         HomeSections.Register(config, _log);
+        progress.Report(100);
     }
 
-    private async Task ApplyRule(
+    /// <summary>Returns true when the collection exists after this call.</summary>
+    private async Task<bool> ApplyRule(
         CollectionRule rule,
+        int minItems,
         IReadOnlyList<BaseItem> allItems,
         List<BoxSet> existing,
         PluginConfiguration config,
         CancellationToken ct)
     {
-        var wantMovies = rule.MediaType is "Movie" or "Both";
-        var wantSeries = rule.MediaType is "Series" or "Both";
-
-        var matched = allItems
-            .Where(i => (wantMovies && i is Movie) || (wantSeries && i is Series))
-            .Where(i => RuleMatcher.Matches(rule, i))
-            .ToList();
-
+        var matched = LibraryQuery.Match(rule, allItems);
         var box = existing.FirstOrDefault(b =>
             string.Equals(b.Name, rule.Name, StringComparison.OrdinalIgnoreCase));
 
-        if (matched.Count < Math.Max(1, config.MinItems))
+        if (matched.Count < Math.Max(1, minItems))
         {
-            _log.LogInformation("Rule '{Rule}': {Count} matches, below minimum, skipped", rule.Name, matched.Count);
-            return;
+            _log.LogInformation("Rule '{Rule}': {Count} matches, below minimum {Min}, skipped", rule.Name, matched.Count, minItems);
+            return box is not null;
         }
 
         if (box is null)
@@ -142,19 +159,14 @@ public class SyncCollectionsTask : IScheduledTask
             }
         }
 
-        // Order of items inside the collection.
-        box.DisplayOrder = rule.ItemOrder switch
-        {
-            "SortName" => "SortName",
-            _ => "PremiereDate"
-        };
+        box.DisplayOrder = rule.ItemOrder == "SortName" ? "SortName" : "PremiereDate";
 
-        // Order of the collection among other collections: Jellyfin sorts by SortName,
-        // so a numeric prefix gives a stable, user-controlled order.
+        // Jellyfin sorts collections by SortName, so a numeric prefix gives a stable, user-set order.
         box.ForcedSortName = rule.Position > 0
             ? $"{rule.Position:D3} {rule.Name}"
             : string.Empty;
 
         await box.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, ct).ConfigureAwait(false);
+        return true;
     }
 }

@@ -36,7 +36,7 @@ public static class HomeSections
         }
 
         var self = typeof(HomeSections).Assembly;
-        foreach (var rule in config.Rules.Where(r => r.Enabled && r.ShowOnHome && !string.IsNullOrWhiteSpace(r.Name)))
+        foreach (var rule in LibraryQuery.AllRules(config).Where(r => r.ShowOnHome))
         {
             var payload = new JObject
             {

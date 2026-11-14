@@ -6,22 +6,37 @@
   <div data-role="content">
     <div class="content-primary">
       <h1>Library Organizer</h1>
-      <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries and studios
-      match exactly (case-insensitive); title keywords match anywhere in the title.</p>
+      <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries, studios and ratings match exactly (ignoring case); title keywords match anywhere in the title; languages can be names (Korean) or codes (kor).</p>
+
+      <details id="values" style="margin:1em 0">
+        <summary>What is in my library (click a value to add it to the field you last used)</summary>
+        <div id="valuesBody" style="margin-top:.5em">Loading...</div>
+      </details>
+
       <form id="OrganizerForm">
-        <div class="checkboxContainer checkboxContainer-withDescription">
-          <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="removeNonMatching" /><span>Remove items that stop matching</span></label>
-        </div>
-        <div class="inputContainer">
-          <label class="inputLabel inputLabelUnfocused" for="minItems">Minimum items for a collection</label>
-          <input is="emby-input" type="number" id="minItems" min="1" />
-        </div>
-        <div class="inputContainer">
-          <label class="inputLabel inputLabelUnfocused" for="homeRowLimit">Items per home screen row (requires the Home Screen Sections plugin)</label>
-          <input is="emby-input" type="number" id="homeRowLimit" min="1" />
-        </div>
+        <h2>Rules</h2>
         <div id="rules"></div>
-        <button is="emby-button" type="button" class="raised" id="addRule"><span>Add rule</span></button>
+        <div style="margin:1em 0">
+          <button is="emby-button" type="button" class="raised" id="addRule"><span>Add empty rule</span></button>
+          <select id="templateSelect" style="margin-left:1em"></select>
+          <button is="emby-button" type="button" class="raised" id="addTemplate"><span>Add from template</span></button>
+        </div>
+
+        <h2>Automatic collections</h2>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGenre" /><span>One collection per genre ("Comedy Movies")</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoCountry" /><span>One collection per country ("Movies from Japan")</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoHome" /><span>Also show these on the home screen (can get crowded)</span></label></div>
+        <label>For <select id="autoType"><option>Movie</option><option>Series</option><option>Both</option></select></label>
+        <label style="margin-left:1em">Only if at least <input type="number" id="autoMin" min="1" style="width:5em"> items</label>
+
+        <h2>General</h2>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="removeNonMatching" /><span>Remove items that stop matching</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnChange" /><span>Re-sync a couple of minutes after new movies or shows are added</span></label></div>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="deleteRemoved" /><span>Delete a collection when its rule is removed or disabled (media files are never touched)</span></label></div>
+        <label>Minimum items for a rule's collection <input type="number" id="minItems" min="1" style="width:5em"></label><br><br>
+        <label>Items per home screen row (needs Home Screen Sections) <input type="number" id="homeRowLimit" min="1" style="width:5em"></label>
+
+        <br><br>
         <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
         <button is="emby-button" type="button" class="raised block" id="syncNow"><span>Save, then sync collections now</span></button>
         <div id="syncStatus" style="margin-top:1em"></div>
@@ -32,83 +47,162 @@
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
       var page = document.querySelector('#OrganizerPage');
-      var cfg = null;
-      var fields = [
-        ['Genres', 'Genres'], ['Tags', 'Tags'], ['Countries', 'Countries (production)'],
-        ['Studios', 'Studios'], ['TitleKeywords', 'Title keywords'], ['OfficialRatings', 'Official ratings']
+      var cfg = null, lastList = null;
+
+      var listFields = [
+        ['Genres', 'Genres'], ['Tags', 'Tags'], ['Countries', 'Countries (production)'], ['Studios', 'Studios'],
+        ['OfficialRatings', 'Official ratings'], ['TitleKeywords', 'Title keywords'], ['Languages', 'Audio languages']
+      ];
+      var excludeFields = [
+        ['ExcludeGenres', 'Not these genres'], ['ExcludeTags', 'Not these tags'],
+        ['ExcludeCountries', 'Not these countries'], ['ExcludeKeywords', 'Not these title words']
+      ];
+      var sortChoices = ['PremiereDate', 'SortName', 'CommunityRating', 'DateAdded', 'Random'];
+      var templates = [
+        { n: 'Kids and family', r: { OfficialRatings: ['G', 'PG', 'TV-Y', 'TV-G', 'TV-PG'], Genres: ['Family', 'Animation'], Match: 'Any' } },
+        { n: 'Top rated (8+)', r: { MinCommunityRating: 8, HomeSort: 'CommunityRating' } },
+        { n: '1980s', r: { YearFrom: 1980, YearTo: 1989 } },
+        { n: '1990s', r: { YearFrom: 1990, YearTo: 1999 } },
+        { n: '2000s', r: { YearFrom: 2000, YearTo: 2009 } },
+        { n: 'Korean movies', r: { Languages: ['Korean'], Countries: ['South Korea'], Match: 'Any' } },
+        { n: 'Japanese anime', r: { Countries: ['Japan'], Genres: ['Animation'], Match: 'All' } },
+        { n: 'Tagalog / Filipino audio', r: { Languages: ['Filipino'] } },
+        { n: 'Halloween', r: { Tags: ['halloween'], TitleKeywords: ['halloween'], Genres: ['Horror'], Match: 'Any' } },
+        { n: 'Documentaries', r: { Genres: ['Documentary'] } },
+        { n: 'Recently added', r: { HomeSort: 'DateAdded' } }
       ];
 
       function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
       function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-      function sel(id, opts, cur) {
-        return '<select data-k="' + id + '">' + opts.map(function (o) {
-          return '<option value="' + o + '"' + (o === cur ? ' selected' : '') + '>' + o + '</option>';
+      function sel(k, opts, cur) {
+        return '<select data-k="' + k + '">' + opts.map(function (o) {
+          return '<option' + (o === cur ? ' selected' : '') + '>' + o + '</option>';
         }).join('') + '</select>';
+      }
+      function textList(f, r) {
+        return '<label style="display:block;margin:.3em 0">' + f[1] + '<br><input type="text" data-list="' + f[0] + '" value="' +
+          esc((r[f[0]] || []).join(', ')) + '" style="width:100%"></label>';
       }
 
       function renderRule(r) {
         var h = '<fieldset class="rule" style="margin:1.5em 0;padding:1em;border:1px solid #555;">' +
-          '<label><input type="checkbox" data-k="Enabled"' + (r.Enabled ? ' checked' : '') + '> Enabled</label> ' +
-          '<button type="button" class="del" style="float:right">Delete</button><br><br>' +
+          '<label><input type="checkbox" data-k="Enabled"' + (r.Enabled !== false ? ' checked' : '') + '> Enabled</label>' +
+          '<button type="button" class="del" style="float:right">Delete rule</button><br><br>' +
           '<label>Collection name<br><input type="text" data-k="Name" value="' + esc(r.Name) + '" style="width:100%"></label><br><br>' +
-          '<label>Media type ' + sel('MediaType', ['Movie', 'Series', 'Both'], r.MediaType) + '</label> ' +
-          '<label>Combine fields ' + sel('Match', ['Any', 'All'], r.Match) + '</label> ' +
-          '<label><input type="checkbox" data-k="ShowOnHome"' + (r.ShowOnHome ? ' checked' : '') + '> Show on home screen</label> ' +
-          '<label>Item order ' + sel('ItemOrder', ['PremiereDate', 'SortName'], r.ItemOrder) + '</label><br><br>';
-        fields.forEach(function (f) {
-          h += '<label>' + f[1] + '<br><input type="text" data-list="' + f[0] + '" value="' + esc((r[f[0]] || []).join(', ')) + '" style="width:100%"></label><br>';
-        });
-        h += '<br><label>Year from <input type="number" data-num="YearFrom" value="' + esc(r.YearFrom) + '" style="width:6em"></label> ' +
+          '<label>Media type ' + sel('MediaType', ['Movie', 'Series', 'Both'], r.MediaType || 'Movie') + '</label> ' +
+          '<label>Combine fields ' + sel('Match', ['Any', 'All'], r.Match || 'Any') + '</label> ' +
+          '<label>Position <input type="number" data-num="Position" value="' + esc(r.Position || 0) + '" style="width:5em"></label><br><br>';
+        listFields.forEach(function (f) { h += textList(f, r); });
+        h += '<details style="margin:.8em 0"><summary>Leave out</summary>';
+        excludeFields.forEach(function (f) { h += textList(f, r); });
+        h += '</details>';
+        h += '<label>Year from <input type="number" data-num="YearFrom" value="' + esc(r.YearFrom) + '" style="width:6em"></label> ' +
           '<label>to <input type="number" data-num="YearTo" value="' + esc(r.YearTo) + '" style="width:6em"></label> ' +
-          '<label>Min rating <input type="number" step="0.1" data-num="MinCommunityRating" value="' + esc(r.MinCommunityRating) + '" style="width:5em"></label> ' +
-          '<label>Position <input type="number" data-num="Position" value="' + esc(r.Position) + '" style="width:5em"></label>' +
+          '<label>Min rating <input type="number" step="0.1" data-num="MinCommunityRating" value="' + esc(r.MinCommunityRating) + '" style="width:5em"></label><br><br>' +
+          '<label>Order on the collection page ' + sel('ItemOrder', ['PremiereDate', 'SortName'], r.ItemOrder || 'PremiereDate') + '</label><br><br>' +
+          '<label><input type="checkbox" data-k="ShowOnHome"' + (r.ShowOnHome !== false ? ' checked' : '') + '> Show on home screen</label> ' +
+          '<label>sorted by ' + sel('HomeSort', sortChoices, r.HomeSort || 'PremiereDate') + '</label> ' +
+          '<label><input type="checkbox" data-k="HomeDescending"' + (r.HomeDescending !== false ? ' checked' : '') + '> highest / newest first</label><br><br>' +
+          '<button type="button" class="preview">Preview matches</button> <span class="previewCount"></span>' +
+          '<div class="previewList" style="margin-top:.5em;font-size:.9em;opacity:.85"></div>' +
           '</fieldset>';
         var node = el(h);
         node.querySelector('.del').onclick = function () { node.remove(); };
+        node.querySelectorAll('[data-list]').forEach(function (i) { i.onfocus = function () { lastList = i; }; });
+        node.querySelector('.preview').onclick = function () { preview(node); };
         return node;
       }
 
-      function readRules() {
-        return Array.prototype.map.call(page.querySelectorAll('.rule'), function (n) {
-          var r = {};
-          n.querySelectorAll('[data-k]').forEach(function (i) {
-            r[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value;
-          });
-          n.querySelectorAll('[data-list]').forEach(function (i) {
-            r[i.dataset.list] = i.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-          });
-          n.querySelectorAll('[data-num]').forEach(function (i) {
-            r[i.dataset.num] = i.value === '' ? null : Number(i.value);
-          });
-          r.Position = r.Position || 0;
-          return r;
+      function readRule(n) {
+        var r = {};
+        n.querySelectorAll('[data-k]').forEach(function (i) { r[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value; });
+        n.querySelectorAll('[data-list]').forEach(function (i) {
+          r[i.dataset.list] = i.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
         });
+        n.querySelectorAll('[data-num]').forEach(function (i) { r[i.dataset.num] = i.value === '' ? null : Number(i.value); });
+        r.Position = r.Position || 0;
+        return r;
+      }
+      function readRules() { return Array.prototype.map.call(page.querySelectorAll('.rule'), readRule); }
+
+      function preview(node) {
+        var count = node.querySelector('.previewCount'), list = node.querySelector('.previewList');
+        count.textContent = 'Checking...'; list.textContent = '';
+        ApiClient.ajax({
+          type: 'POST', url: ApiClient.getUrl('LibraryOrganizer/Preview'),
+          data: JSON.stringify(readRule(node)), contentType: 'application/json', dataType: 'json'
+        }).then(function (res) {
+          count.textContent = res.Count + ' match' + (res.Count === 1 ? '' : 'es');
+          list.textContent = res.Items.join(' · ') + (res.Count > res.Items.length ? ' ...' : '');
+        }).catch(function () { count.textContent = 'Preview failed. Check the Jellyfin log.'; });
+      }
+
+      function renderValues(v) {
+        var body = page.querySelector('#valuesBody'); body.innerHTML = '';
+        [['Genres', v.Genres], ['Tags', v.Tags], ['Countries', v.Countries], ['Studios', v.Studios], ['Ratings', v.Ratings]].forEach(function (g) {
+          var d = el('<div style="margin:.5em 0"><b>' + g[0] + ':</b> </div>');
+          (g[1] || []).slice(0, 60).forEach(function (x) {
+            var s = el('<span style="cursor:pointer;margin-right:.8em;text-decoration:underline dotted">' + esc(x.Name) + ' (' + x.Count + ')</span>');
+            s.onclick = function () {
+              if (!lastList) { return; }
+              var cur = lastList.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+              if (cur.indexOf(x.Name) < 0) { cur.push(x.Name); }
+              lastList.value = cur.join(', ');
+            };
+            d.appendChild(s);
+          });
+          body.appendChild(d);
+        });
+      }
+
+      function gather() {
+        cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
+        cfg.SyncOnLibraryChange = page.querySelector('#syncOnChange').checked;
+        cfg.DeleteRemovedCollections = page.querySelector('#deleteRemoved').checked;
+        cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
+        cfg.AutoCountryCollections = page.querySelector('#autoCountry').checked;
+        cfg.AutoShowOnHome = page.querySelector('#autoHome').checked;
+        cfg.AutoMediaType = page.querySelector('#autoType').value;
+        cfg.AutoMinItems = Number(page.querySelector('#autoMin').value) || 1;
+        cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
+        cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
+        cfg.Rules = readRules();
       }
 
       page.addEventListener('pageshow', function () {
         Dashboard.showLoadingMsg();
+        var ts = page.querySelector('#templateSelect');
+        if (!ts.options.length) { templates.forEach(function (t, i) { ts.appendChild(new Option(t.n, i)); }); }
         ApiClient.getPluginConfiguration(pluginId).then(function (c) {
           cfg = c;
           page.querySelector('#removeNonMatching').checked = c.RemoveNonMatching;
+          page.querySelector('#syncOnChange').checked = c.SyncOnLibraryChange;
+          page.querySelector('#deleteRemoved').checked = c.DeleteRemovedCollections;
+          page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
+          page.querySelector('#autoCountry').checked = c.AutoCountryCollections;
+          page.querySelector('#autoHome').checked = c.AutoShowOnHome;
+          page.querySelector('#autoType').value = c.AutoMediaType || 'Movie';
+          page.querySelector('#autoMin').value = c.AutoMinItems;
           page.querySelector('#minItems').value = c.MinItems;
           page.querySelector('#homeRowLimit').value = c.HomeRowLimit;
           var box = page.querySelector('#rules'); box.innerHTML = '';
           (c.Rules || []).forEach(function (r) { box.appendChild(renderRule(r)); });
           Dashboard.hideLoadingMsg();
         });
+        ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('LibraryOrganizer/Values'), dataType: 'json' })
+          .then(renderValues).catch(function () { page.querySelector('#valuesBody').textContent = 'Could not load library values.'; });
       });
 
-      page.querySelector('#addRule').onclick = function () {
-        page.querySelector('#rules').appendChild(renderRule({ Enabled: true, Name: '', MediaType: 'Movie', Match: 'Any', ItemOrder: 'PremiereDate', ShowOnHome: true, Position: 0 }));
+      page.querySelector('#addRule').onclick = function () { page.querySelector('#rules').appendChild(renderRule({})); };
+      page.querySelector('#addTemplate').onclick = function () {
+        var t = templates[Number(page.querySelector('#templateSelect').value)];
+        var r = Object.assign({ Name: t.n }, t.r);
+        page.querySelector('#rules').appendChild(renderRule(r));
       };
 
       page.querySelector('#syncNow').onclick = function () {
         var status = page.querySelector('#syncStatus');
-        cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
-        cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
-        cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
-        cfg.Rules = readRules();
-        status.textContent = 'Saving...';
+        gather(); status.textContent = 'Saving...';
         ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
           return ApiClient.getScheduledTasks();
         }).then(function (tasks) {
@@ -122,11 +216,7 @@
 
       page.querySelector('#OrganizerForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        Dashboard.showLoadingMsg();
-        cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
-        cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
-        cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
-        cfg.Rules = readRules();
+        Dashboard.showLoadingMsg(); gather();
         ApiClient.updatePluginConfiguration(pluginId, cfg).then(Dashboard.processPluginConfigurationUpdateResult);
       });
     })();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jellyfin.Plugin.Organizer.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
@@ -14,6 +15,28 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
+
+        // A config written by an older version may hold duplicated default rules; keep the first of each name.
+        var distinct = Configuration.Rules
+            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        var changed = distinct.Count != Configuration.Rules.Count;
+        Configuration.Rules = distinct;
+        if (!Configuration.DefaultsSeeded)
+        {
+            if (Configuration.Rules.Count == 0)
+            {
+                Configuration.Rules = PluginConfiguration.DefaultRules();
+            }
+
+            Configuration.DefaultsSeeded = true;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            SaveConfiguration();
+        }
+
         ConfigurationChanged += (_, _) =>
             HomeSections.Register(Configuration, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
     }

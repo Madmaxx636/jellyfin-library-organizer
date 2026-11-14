@@ -9,22 +9,39 @@ Tested on Jellyfin 10.11.
 - **Rules to collections.** A rule matches movies or series by genre, tag, production country, studio, official rating, title keywords, year range or minimum rating. Example rules ship for "Filipino Movies" (country: Philippines) and "Christmas Movies" (Holiday genre, christmas tag, or christmas/santa in the title).
 - **Ordering.** Each rule picks how items are sorted inside its collection (premiere date or name) and has a Position number that sets where the collection sits among your other collections.
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
-- **Stays current.** A daily task (4 AM) adds new matches and removes items that no longer match. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
+- **Stays current.** A daily task (4 AM) and an auto-sync after new media is added put new matches in and take out items that no longer match. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
 
 ## Settings
 
-Open Dashboard and click Library Organizer in the left sidebar. Each rule has these options:
+Open Dashboard and click Library Organizer in the left sidebar.
 
-- **Collection name.** Also the name of the row on the home screen.
+**Rules.** Each rule builds one collection:
+
+- **Collection name.** Also the name of its home screen row.
 - **Media type.** Movie, Series or Both.
-- **Combine fields.** "Any" puts an item in if any filled field matches. "All" needs every filled field to match. Several values inside one field (for example two genres) always mean "any of these".
-- **Genres, Tags, Countries, Studios, Official ratings, Title keywords.** Comma separated. Everything matches exactly except title keywords, which match anywhere in the title.
+- **Combine fields.** "Any" puts an item in if any filled field matches. "All" needs every filled field to match. Several values inside one field (two genres, say) always mean "any of these".
+- **Genres, Tags, Countries, Studios, Official ratings.** Comma separated, matched exactly (ignoring case).
+- **Title keywords.** Matched anywhere in the title.
+- **Audio languages.** Names or codes: Korean, ko and kor are the same. Movies only, read from the audio tracks.
+- **Leave out.** Items matching any of these genres, tags, countries or title words are always excluded. A rule with only exclusions means "everything except these".
 - **Year from / to, Min rating.** Extra limits that always apply.
-- **Item order.** How items are sorted inside the collection.
+- **Order on the collection page.** Premiere date or name.
 - **Position.** Lower numbers come first among your collections. 0 means no forced position.
-- **Show on home screen.** Adds the collection as a row (needs the plugins below).
+- **Show on home screen, sorted by.** Newest, name, rating, date added or random, in either direction.
+- **Preview matches.** Shows what the rule matches right now without changing anything.
 
-Global options: remove items that stop matching, minimum items before a collection is created, and items per home row. Use "Save, then sync collections now" to apply changes immediately.
+**Helpers.** The "What is in my library" panel lists the genres, tags, countries, studios and ratings you actually have, with counts. Click one to add it to the field you last used. "Add from template" gives starting points such as kids and family, decades, Korean movies and Halloween.
+
+**Automatic collections.** Optionally build one collection per genre ("Comedy Movies") and/or per country ("Movies from Japan"), only when there are at least N items. A manual rule with the same name wins.
+
+**General.**
+
+- Remove items that stop matching.
+- Re-sync about two minutes after new movies or shows are added.
+- Delete a collection when its rule is removed or disabled (off by default; media files are never touched).
+- Minimum items for a collection, and items per home row.
+
+Use "Save, then sync collections now" to apply changes immediately. Otherwise the daily 4 AM task and the auto-sync do it.
 
 ## Install
 
@@ -51,7 +68,7 @@ These need three other plugins:
 
 After installing them, enable the organizer rows in Home Screen Sections' settings (Dashboard, Plugins, Home Screen Sections), then reload the web client. Rows are named after your rules.
 
-## Build
+## Build and test
 
 Needs Docker, nothing else:
 
@@ -59,4 +76,8 @@ Needs Docker, nothing else:
 ./build.sh
 ```
 
-This writes `LibraryOrganizer_<version>.zip` and prints its SHA-256.
+This writes `LibraryOrganizer_<version>.zip` and prints its SHA-256. Run the tests with:
+
+```bash
+docker run --rm -v "$PWD":/w -w /w mcr.microsoft.com/dotnet/sdk:9.0 dotnet test tests/Jellyfin.Plugin.Organizer.Tests
+```
