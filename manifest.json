@@ -10,11 +10,11 @@
     "versions": [
       {
         "version": "1.0.0.0",
-        "changelog": "First stable release. Automatic collections sort franchises first, then countries, then genres (optional). Cleanup and docs.",
+        "changelog": "First stable release. Sort collections by release date, year, name, rating, runtime, date added or story order (built in for Star Wars and Indiana Jones), ascending or descending. Pin or order collections. Preview next sync, last-sync report, settings backup, hide-watched home rows, and a simpler four-tab settings page.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v1.0.0/LibraryOrganizer_1.0.0.0.zip",
-        "checksum": "4cb2d9d98a38d91d435e1900414309f2",
-        "timestamp": "2026-11-15T15:39:05Z"
+        "checksum": "1e3f1b56f2b83af81357467a0f981af2",
+        "timestamp": "2026-11-15T15:59:44Z"
       },
       {
         "version": "0.7.0.0",
