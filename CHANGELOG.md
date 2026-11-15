@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 - Same release, new version number
+
+Changed
+- Nothing in the plugin itself changed from the rebuilt 1.0.0. This release only gives that build its own version number, so Jellyfin offers it as an update and the checksum matches. If you installed 1.0.0 before 15 November 2026 and the catalog shows a checksum error or no update, install 1.0.1.
+
 ## 1.0.0 - First stable release
 
 New
