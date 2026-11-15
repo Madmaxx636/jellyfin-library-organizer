@@ -7,7 +7,7 @@ Tested on Jellyfin 10.11.
 ## What it does
 
 - **Rules to collections.** A rule matches movies or series by genre, tag, production country, studio, official rating, title keywords, year range or minimum rating. Example rules ship for "Filipino Movies" (country: Philippines) and "Christmas Movies" (Holiday genre, christmas tag, or christmas/santa in the title).
-- **Ordering.** Each rule picks how items are sorted inside its collection (premiere date or name) and has a Position number that sets where the collection sits among your other collections.
+- **Ordering.** Sort the titles inside a collection by release date, year, name, rating, runtime, date added or story order, ascending or descending. Story order is built in for Star Wars and Indiana Jones, and you can set your own for any collection with the arrows in its preview. A Position pin and a collection order (A to Z, newest, oldest, highest rated, biggest) decide where collections sit on the Collections page.
 - **Artwork.** Each collection gets a poster, thumb and backdrop drawn from the artwork of the titles inside it, with its name on top (see Artwork below).
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
 - **Runs on its own.** A sync runs about a minute after the server starts, about two minutes after movies or shows are added or their metadata changes, and daily at 4 AM. New matches go in and items that no longer match come out. Nothing to click.
@@ -30,9 +30,9 @@ Open Dashboard and click Library Organizer in the left sidebar. The page title s
 - **Audio languages.** Names or codes: Korean, ko and kor are the same. Movies only, read from the audio tracks.
 - **Leave out.** Items matching any of these genres, tags, countries or title words are always excluded. A rule with only exclusions means "everything except these".
 - **Year from / to, Min rating.** Extra limits that always apply.
-- **Order on the collection page.** Premiere date or name.
-- **Position.** Lower numbers come first among your collections. 0 means no forced position.
-- **Show on home screen, sorted by.** Newest, name, rating, date added or random, in either direction.
+- **Sort titles by, Direction.** Release date, year, name, rating, runtime, date added or story order; ascending or descending. Titles with no value always go last.
+- **Pin to position.** Lower numbers come first among your collections. 0 means no pin.
+- **Home row.** Show as a row, ordered like the collection or by its own order (or random), optionally hiding titles you have watched.
 - **Preview matches.** Shows what the rule matches right now, and why each title matched, without changing anything. Click "Not a match" to exclude a title.
 
 **Helpers.** The "What is in my library" panel lists the genres, tags, countries, studios and ratings you actually have, with counts. Click one to add it to the field you last used. "Add from template" gives starting points such as kids and family, decades, Korean movies and Halloween.
@@ -48,6 +48,10 @@ Open Dashboard and click Library Organizer in the left sidebar. The page title s
 
 Use "Save, then sync collections now" to apply changes immediately. Otherwise the daily 4 AM task and the auto-sync do it.
 
+## Overview tab
+
+Shows what the last sync did, "Preview what the next sync would change" (nothing is touched), and what is in your library. The Settings tab has a backup: download your collections and settings, or load them on another server.
+
 ## Install
 
 ### From the plugin repository (easiest)
@@ -62,6 +66,12 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 2. Unzip into `plugins/LibraryOrganizer_<version>/` inside your Jellyfin data folder.
 3. Restart Jellyfin, then open Dashboard, Plugins, Library Organizer to edit your rules.
 4. That's it. Collections build themselves about a minute after the restart. To force it, use "Save, then sync collections now" on the settings page.
+
+## Sorting
+
+Jellyfin sorts a collection page itself only by a few keys, ascending. For the rest (story order, rating, newest first) the plugin stores the collection in the order you chose and re-applies it on every sync, so the order shows up on the collection page and in home rows. Titles with no rating, runtime or date always go last.
+
+Story order has a built-in list for Star Wars and Indiana Jones. For any other franchise, make a collection of your own with Franchises set, choose Story order, press Preview and move titles with the arrows. Titles you haven't placed follow release order.
 
 ## Franchises and countries
 

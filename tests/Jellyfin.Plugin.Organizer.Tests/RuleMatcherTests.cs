@@ -129,9 +129,9 @@ public class HomeSortTests
             new Movie { Name = "New", ProductionYear = 2020 },
             new Movie { Name = "Mid", ProductionYear = 2005 },
         };
-        var order = Jellyfin.Plugin.Organizer.HomeResultsHandler.Sort(items, "PremiereDate", true).Select(i => i.Name);
+        var order = Jellyfin.Plugin.Organizer.HomeResultsHandler.Sort(items, null, "PremiereDate", true).Select(i => i.Name);
         Assert.Equal(new[] { "New", "Mid", "Old" }, order);
-        var asc = Jellyfin.Plugin.Organizer.HomeResultsHandler.Sort(items, "PremiereDate", false).Select(i => i.Name);
+        var asc = Jellyfin.Plugin.Organizer.HomeResultsHandler.Sort(items, null, "PremiereDate", false).Select(i => i.Name);
         Assert.Equal(new[] { "Old", "Mid", "New" }, asc);
     }
 }

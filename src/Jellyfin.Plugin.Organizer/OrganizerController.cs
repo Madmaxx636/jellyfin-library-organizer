@@ -22,7 +22,9 @@ public record LibraryValues(
 
 public record PreviewItem(string Id, string Name, int? Year, List<string> Why);
 
-public record PreviewResult(int Count, List<PreviewItem> Items);
+public record PreviewResult(int Count, List<PreviewItem> Items, bool HasBuiltInStory);
+
+public record StatusResult(SyncReport? Last, int Collections, string Version);
 
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
@@ -80,11 +82,71 @@ public class OrganizerController : ControllerBase
     {
         await WikidataLists.EnsureAsync(rule.PublicGenres, null, ct).ConfigureAwait(false);
         var matched = LibraryQuery.Match(rule, LibraryQuery.MoviesAndSeries(_library));
-        var items = matched
-            .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
+
+        // Shown in the order the collection will have, so this doubles as a check of the sort settings.
+        var items = ItemSorter.Order(matched, rule.ItemOrder, rule.ItemDescending, rule.StoryOrder)
             .Take(500)
             .Select(i => new PreviewItem(i.Id.ToString("N"), i.Name, i.ProductionYear, RuleMatcher.Explain(rule, i)))
             .ToList();
-        return new PreviewResult(matched.Count, items);
+        return new PreviewResult(matched.Count, items, ItemSorter.HasBuiltInStory(matched));
+    }
+
+    /// <summary>What a sync would do with the saved settings, without changing anything.</summary>
+    [HttpGet("Plan")]
+    public async Task<ActionResult<List<PlannedChange>>> Plan(CancellationToken ct)
+    {
+        var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
+        var manual = config.Rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Name))
+            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        await WikidataLists.EnsureAsync(manual.SelectMany(r => r.PublicGenres), null, ct).ConfigureAwait(false);
+
+        var items = LibraryQuery.MoviesAndSeries(_library);
+        var existing = _library.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+        {
+            IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.BoxSet },
+            Recursive = true
+        }).OfType<MediaBrowser.Controller.Entities.Movies.BoxSet>().ToList();
+
+        var auto = LibraryQuery.SelectAutoRules(config, items, existing.Select(b => b.Name).ToList(), manual);
+        var plan = new List<PlannedChange>();
+        foreach (var (rule, isAuto) in manual.Select(r => (r, false)).Concat(auto.Select(r => (r, true))))
+        {
+            var matched = LibraryQuery.Match(rule, items);
+            var min = LibraryQuery.MinimumFor(rule, config, isAuto);
+            var kind = !isAuto ? "Your rule" : rule.Franchises.Length > 0 ? "Franchise" : rule.Countries.Length > 0 ? "Country" : "Genre";
+            var box = existing.FirstOrDefault(b => string.Equals(b.Name, rule.Name, StringComparison.OrdinalIgnoreCase));
+            if (matched.Count < Math.Max(1, min))
+            {
+                plan.Add(new PlannedChange(rule.Name, kind, "Skip", matched.Count, 0, 0, $"{matched.Count} match, needs {min}"));
+                continue;
+            }
+
+            if (box is null)
+            {
+                plan.Add(new PlannedChange(rule.Name, kind, "Create", matched.Count, matched.Count, 0, string.Empty));
+                continue;
+            }
+
+            var current = box.GetLinkedChildren().Select(c => c.Id).ToHashSet();
+            var wanted = matched.Select(m => m.Id).ToHashSet();
+            var add = wanted.Except(current).Count();
+            var forced = RuleMatcher.ItemIds(rule.ExcludeItems);
+            var remove = config.RemoveNonMatching ? current.Except(wanted).Count() : current.Count(id => forced.Contains(id.ToString("N")));
+            plan.Add(new PlannedChange(rule.Name, kind, add + remove > 0 ? "Update" : "No change", matched.Count, add, remove, string.Empty));
+        }
+
+        return plan;
+    }
+
+    /// <summary>When the last sync ran and what it did.</summary>
+    [HttpGet("Status")]
+    public ActionResult<StatusResult> Status()
+    {
+        var boxes = _library.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
+        {
+            IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.BoxSet },
+            Recursive = true
+        }).Count;
+        return new StatusResult(SyncReport.Load(), boxes, typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? string.Empty);
     }
 }

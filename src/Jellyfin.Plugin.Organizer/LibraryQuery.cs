@@ -87,7 +87,7 @@ public static class LibraryQuery
                          .GroupBy(g => g.Trim(), System.StringComparer.OrdinalIgnoreCase)
                          .OrderBy(g => g.Key, System.StringComparer.OrdinalIgnoreCase))
             {
-                Add($"{g.Key} {noun}", new CollectionRule { Genres = new[] { g.Key }, MediaType = type, ItemOrder = "SortName" },
+                Add($"{g.Key} {noun}", new CollectionRule { Genres = new[] { g.Key }, MediaType = type, ItemOrder = config.AutoItemOrder },
                     g.Count(), config.AutoMinItems);
             }
         }
@@ -98,7 +98,7 @@ public static class LibraryQuery
         {
             var count = pool.Count(i => i.ProductionLocations.Any(c => CountryNames.Same(c, country)));
             Add(CountryNames.CollectionName(country, noun),
-                new CollectionRule { Countries = new[] { CountryNames.Canon(country) }, MediaType = type, ItemOrder = "SortName" },
+                new CollectionRule { Countries = new[] { CountryNames.Canon(country) }, MediaType = type, ItemOrder = config.AutoItemOrder },
                 count, config.MinItems);
         }
 
@@ -117,9 +117,8 @@ public static class LibraryQuery
                     {
                         Franchises = new[] { g.Key },
                         MediaType = "Movie",
-                        ItemOrder = "PremiereDate",
-                        HomeSort = "PremiereDate",
-                        HomeDescending = false
+                        ItemOrder = config.FranchiseItemOrder,
+                        HomeSort = "Same"
                     },
                     g.Count(), Math.Max(2, config.FranchiseMinItems));
             }
@@ -127,4 +126,39 @@ public static class LibraryQuery
 
         return result;
     }
+
+    /// <summary>
+    /// The automatic collections that should actually be made: not already made by Jellyfin itself, and not an
+    /// exact copy of one of your own rules. Shared by the sync and the "preview changes" report.
+    /// </summary>
+    public static List<CollectionRule> SelectAutoRules(
+        PluginConfiguration config,
+        IReadOnlyList<BaseItem> items,
+        IReadOnlyCollection<string> existingCollectionNames,
+        IReadOnlyList<CollectionRule> manual,
+        Action<string>? onSkip = null)
+    {
+        var taken = new HashSet<string>(config.Rules.Select(r => r.Name), System.StringComparer.OrdinalIgnoreCase);
+        var auto = BuildAutoRules(config, items, taken);
+        var manualSets = manual.Select(r => Match(r, items).Select(i => i.Id).ToHashSet()).ToList();
+        return auto.Where(a =>
+        {
+            // Jellyfin's own "automatically add to collection" option may already have made this franchise.
+            if (a.Franchises.Length > 0 && existingCollectionNames.Any(n => a.Franchises.Any(f => string.Equals(n, f, System.StringComparison.OrdinalIgnoreCase))))
+            {
+                onSkip?.Invoke($"Franchise '{a.Name}' already has a Jellyfin-made collection; skipping");
+                return false;
+            }
+
+            var ids = Match(a, items).Select(i => i.Id).ToHashSet();
+            return !manualSets.Any(m => m.SetEquals(ids));
+        }).ToList();
+    }
+
+    /// <summary>Minimum number of titles for a rule's collection to exist.</summary>
+    public static int MinimumFor(CollectionRule rule, PluginConfiguration config, bool isAuto) =>
+        !isAuto ? config.MinItems
+        : rule.Franchises.Length > 0 ? System.Math.Max(2, config.FranchiseMinItems)
+        : rule.Countries.Length > 0 ? config.MinItems
+        : config.AutoMinItems;
 }

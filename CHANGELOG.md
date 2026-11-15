@@ -3,16 +3,26 @@
 ## 1.0.0 - First stable release
 
 New
-- **Automatic collections sort together.** Franchises come first on the Collections page, then countries, then genres, each A-Z, instead of one long alphabetical list. Turn it off in settings ("Automatic collections") to go back to a single A-Z list.
+- **Sort anything every way.** Each collection can be ordered by release date, year, name, rating, runtime, date added, or story order, ascending or descending. Titles with no value (no rating, no date) always go last. The preview shows the exact order.
+- **Story order.** Built in for Star Wars (prequels, Clone Wars, Solo, Rogue One, original trilogy, sequels) and Indiana Jones (Temple of Doom first). For any other franchise, choose Story order on your own collection and move titles with the arrows; your order is saved with the collection.
+- **Order the collections themselves.** Pin one near the top, or order automatic collections A-Z, newest releases first, oldest first, highest rated or biggest first. Franchises, countries and genres can stay in their own groups.
+- **Order for franchises, countries and genres** is set once under Automatic (franchises default to release order).
+- **Home rows follow the collection's order** by default, or use their own. A row can hide titles you have already watched.
+- **Preview what the next sync would change** (what would be created, added, removed or skipped) without changing anything.
+- **Last sync report** on the Overview tab: when it ran, what it created and updated.
+- **Backup:** download your collections and settings as a file, or load them back (for example on a new server). Loading only fills the page until you press Save.
+- **Quality of life:** search your collections, duplicate and turn them on or off, a live title count on every collection, a warning when a collection has too few titles, "Unsaved changes" indicator, Ctrl+S to save, and "Save and sync now" that tells you when it finished.
 
 Changed
-- Automatic collections no longer use numbered sort positions that grew with the library. They use three fixed groups, so the order stays the same as titles are added.
-- The settings page has a new address (page version 5). The server keeps your newer settings if a cached older page saves.
-- Version and user agent bumped to 1.0.
+- **A new, simpler settings page** with four tabs: Collections, Automatic, Overview, Settings. Collections are cards you open to edit; rarely used filters sit under "More filters". Everything from before is still there.
+- Automatic collections no longer use numbered sort positions that grew with the library; they use three fixed groups, so the order stays the same as titles are added.
+- Settings the sync owns (the list of automatic collections and what it created) can no longer be overwritten by a settings page that was loaded before a sync.
+- The settings page has a new address (page version 6). The server keeps your newer settings if an older cached page saves.
 
 Notes
+- Jellyfin can only sort a collection page itself by a few keys, ascending. For everything else (story order, rating, newest first) the plugin stores the collection in the order you chose and keeps it that way on every sync.
 - Franchises come from the collection TMDb gives each movie. Collections are listed under their first letter on the Collections page, so use the sort button or the A-Z bar to find them, or turn on "Show on home".
-- Everything from 0.1 to 0.7 is included: rules, genres, countries you choose, franchises, public Christmas list with corrections, generated artwork, automatic sync, and home screen rows.
+- Includes everything from 0.1 to 0.7: rules, genres, countries you choose, franchises, the public Christmas list with corrections, generated artwork, automatic sync, and home screen rows.
 
 ## 0.7.0 - Franchises, and only the countries you choose
 

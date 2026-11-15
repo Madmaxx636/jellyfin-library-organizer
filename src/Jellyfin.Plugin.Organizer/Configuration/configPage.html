@@ -2,200 +2,456 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Library Organizer</title></head>
 <body>
-<div id="OrganizerPageP5" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div id="OrganizerPageP6" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+  <style>
+    #OrganizerPageP6 { --lo-line: rgba(127,127,127,.35); --lo-soft: rgba(127,127,127,.14); --lo-accent: var(--theme-primary-color, #00a4dc); }
+    #OrganizerPageP6 .lo-wrap { max-width: 62em; margin: 0 auto; padding: 1.6em 1em 6em; }
+    #OrganizerPageP6 h1 { margin: .6em 0 .1em; }
+    #OrganizerPageP6 h1 small { opacity: .5; font-size: .45em; font-weight: normal; margin-left: .5em; }
+    #OrganizerPageP6 .lo-sub { opacity: .7; margin: 0 0 1em; }
+    #OrganizerPageP6 .lo-tabs { display: flex; gap: .25em; border-bottom: 1px solid var(--lo-line); margin: 1em 0; overflow-x: auto; }
+    #OrganizerPageP6 .lo-tab { background: none; border: 0; border-bottom: 3px solid transparent; color: inherit; padding: .7em 1.1em; cursor: pointer; font-size: 1em; opacity: .7; white-space: nowrap; }
+    #OrganizerPageP6 .lo-tab.on { border-bottom-color: var(--lo-accent); opacity: 1; font-weight: 600; }
+    #OrganizerPageP6 .lo-panel { display: none; }
+    #OrganizerPageP6 .lo-panel.on { display: block; }
+    #OrganizerPageP6 .lo-card { border: 1px solid var(--lo-line); border-radius: 10px; margin: .8em 0; background: var(--lo-soft); }
+    #OrganizerPageP6 .lo-card > .lo-body { padding: .2em 1.1em 1em; }
+    #OrganizerPageP6 .lo-card h3 { margin: 1em 0 .4em; font-size: 1.05em; }
+    #OrganizerPageP6 .lo-head { display: flex; align-items: center; gap: .7em; padding: .7em 1em; cursor: pointer; flex-wrap: wrap; }
+    #OrganizerPageP6 .lo-head .lo-name { flex: 1 1 12em; font-weight: 600; font-size: 1.05em; min-width: 8em; }
+    #OrganizerPageP6 .lo-head .lo-name input { width: 100%; font-weight: 600; }
+    #OrganizerPageP6 .lo-art { width: 38px; height: 56px; border-radius: 4px; object-fit: cover; background: var(--lo-soft); display: none; }
+    #OrganizerPageP6 .lo-chip { display: inline-block; background: var(--lo-soft); border: 1px solid var(--lo-line); border-radius: 999px; padding: .1em .7em; font-size: .82em; margin: .1em .25em .1em 0; white-space: nowrap; }
+    #OrganizerPageP6 .lo-chip.ok { border-color: #3a3; color: #5c5; }
+    #OrganizerPageP6 .lo-chip.warn { border-color: #c80; color: #fb3; }
+    #OrganizerPageP6 .lo-chip.off { opacity: .6; }
+    #OrganizerPageP6 .lo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: .6em 1.2em; }
+    #OrganizerPageP6 label.lo-f { display: block; font-size: .92em; }
+    #OrganizerPageP6 label.lo-f > span { display: block; opacity: .75; margin-bottom: .2em; }
+    #OrganizerPageP6 input[type=text], #OrganizerPageP6 input[type=number], #OrganizerPageP6 input[type=search], #OrganizerPageP6 select {
+      width: 100%; box-sizing: border-box; padding: .5em .6em; border-radius: 6px; border: 1px solid var(--lo-line); background: var(--lo-soft); color: inherit; font: inherit; }
+    #OrganizerPageP6 select option { background: Canvas; color: CanvasText; }
+    #OrganizerPageP6 .lo-check { display: flex; align-items: flex-start; gap: .55em; margin: .5em 0; cursor: pointer; }
+    #OrganizerPageP6 .lo-check input { margin-top: .25em; }
+    #OrganizerPageP6 button.lo-btn { background: var(--lo-soft); border: 1px solid var(--lo-line); color: inherit; border-radius: 6px; padding: .5em 1em; cursor: pointer; font: inherit; }
+    #OrganizerPageP6 button.lo-btn:hover { border-color: var(--lo-accent); }
+    #OrganizerPageP6 button.lo-btn.primary { background: var(--lo-accent); border-color: var(--lo-accent); color: #fff; }
+    #OrganizerPageP6 button.lo-btn.small { padding: .25em .7em; font-size: .85em; }
+    #OrganizerPageP6 button.lo-btn.danger:hover { border-color: #d44; color: #f77; }
+    #OrganizerPageP6 .lo-tools { display: flex; gap: .6em; align-items: center; flex-wrap: wrap; margin: .8em 0; }
+    #OrganizerPageP6 .lo-tools input[type=search] { flex: 1 1 14em; width: auto; }
+    #OrganizerPageP6 details { margin: .8em 0; }
+    #OrganizerPageP6 summary { cursor: pointer; opacity: .9; padding: .2em 0; }
+    #OrganizerPageP6 .lo-note { opacity: .7; font-size: .9em; margin: .3em 0; }
+    #OrganizerPageP6 .lo-warn { margin: .6em 0; padding: .6em .8em; border: 1px solid #c80; border-radius: 6px; color: #fb3; display: none; }
+    #OrganizerPageP6 .lo-row { display: flex; align-items: center; gap: .5em; margin: .25em 0; flex-wrap: wrap; }
+    #OrganizerPageP6 .lo-row .t { flex: 1 1 14em; }
+    #OrganizerPageP6 .lo-row .why { opacity: .65; font-size: .85em; }
+    #OrganizerPageP6 .lo-table { width: 100%; border-collapse: collapse; font-size: .92em; }
+    #OrganizerPageP6 .lo-table td, #OrganizerPageP6 .lo-table th { text-align: left; padding: .4em .6em; border-bottom: 1px solid var(--lo-line); }
+    #OrganizerPageP6 .lo-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(20,20,20,.94); border-top: 1px solid var(--lo-line); padding: .6em 1em; display: flex; gap: .6em; align-items: center; justify-content: flex-end; color: #eee; }
+    #OrganizerPageP6 .lo-bar .dirty { margin-right: auto; color: #fb3; display: none; }
+    #OrganizerPageP6 .lo-bar .msg { margin-right: auto; opacity: .85; }
+    #OrganizerPageP6 .lo-vals span.v { cursor: pointer; margin-right: .8em; text-decoration: underline dotted; display: inline-block; }
+    #OrganizerPageP6 .lo-body { display: none; }
+    #OrganizerPageP6 .lo-card.open > .lo-body { display: block; }
+    #OrganizerPageP6 .lo-caret { transition: transform .15s; opacity: .6; cursor: pointer; }
+    #OrganizerPageP6 .lo-card.open .lo-caret { transform: rotate(90deg); }
+    #OrganizerPageP6 .lo-card.static > .lo-body { display: block; }
+  </style>
+
   <div data-role="content">
-    <div class="content-primary">
-      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 1.0.0, version 5</small></h1>
-      <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries, studios and ratings match exactly (ignoring case); title keywords match anywhere in the title; languages can be names (Korean) or codes (kor).</p>
+    <div class="lo-wrap">
+      <h1>Library Organizer <small id="loVersion">1.0.0</small></h1>
+      <p class="lo-sub">Collections that build and order themselves from your library.</p>
 
-      <details id="values" style="margin:1em 0">
-        <summary>What is in my library (click a value to add it to the field you last used)</summary>
-        <div id="valuesBody" style="margin-top:.5em">Loading...</div>
-      </details>
+      <div class="lo-tabs" role="tablist">
+        <button type="button" class="lo-tab on" data-tab="collections">Collections</button>
+        <button type="button" class="lo-tab" data-tab="auto">Automatic</button>
+        <button type="button" class="lo-tab" data-tab="overview">Overview</button>
+        <button type="button" class="lo-tab" data-tab="settings">Settings</button>
+      </div>
 
-      <form id="OrganizerForm">
-        <h2>Rules</h2>
-        <div id="rules"></div>
-        <div style="margin:1em 0">
-          <button is="emby-button" type="button" class="raised" id="addRule"><span>Add empty rule</span></button>
-          <select id="templateSelect" style="margin-left:1em"></select>
-          <button is="emby-button" type="button" class="raised" id="addTemplate"><span>Add from template</span></button>
+      <!-- COLLECTIONS -->
+      <div class="lo-panel on" data-panel="collections">
+        <p class="lo-note">Each collection is a rule. Click a collection to edit it. Anything you leave empty is ignored.</p>
+        <div class="lo-tools">
+          <input type="search" id="ruleSearch" placeholder="Search your collections">
+          <select id="newMenu" style="width:auto"></select>
         </div>
+        <div id="rules"></div>
+        <div id="noRules" class="lo-note" style="display:none">No collections yet. Use "New collection" above to start from a template.</div>
+      </div>
 
-        <h2>Automatic collections</h2>
-        <p>These build themselves from your library. Nothing is created for a country unless you list it here.</p>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGroup" /><span>Sort automatic collections as franchises first, then countries, then genres (otherwise one A-Z list)</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoFranchise" /><span>Group movies from the same franchise (Star Wars, Indiana Jones...) using the collection TMDb gives each movie</span></label></div>
-        <label style="margin-left:2em">A franchise needs at least <input type="number" id="franchiseMin" min="2" style="width:5em"> movies</label>
-        <div class="checkboxContainer" style="margin-top:.8em"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGenre" /><span>One collection per genre ("Comedy Movies")</span></label></div>
-        <label style="display:block;margin:.8em 0">Countries to group, comma separated (for example Philippines, United Kingdom, Japan). Each becomes "Filipino Movies", "British Movies", "Japanese Movies" and so on.<br>
-          <input type="text" id="autoCountries" placeholder="Philippines, United Kingdom" style="width:100%"></label>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoHome" /><span>Also show these on the home screen (can get crowded)</span></label></div>
-        <label>For <select id="autoType"><option>Movie</option><option>Series</option><option>Both</option></select></label>
-        <label style="margin-left:1em">Genre collections only if at least <input type="number" id="autoMin" min="1" style="width:5em"> items</label>
+      <!-- AUTOMATIC -->
+      <div class="lo-panel" data-panel="auto">
+        <p class="lo-note">These build themselves from your library and stay up to date. Collections you make yourself always win over automatic ones with the same name.</p>
 
-        <h2>Artwork</h2>
-        <p>Makes a poster, thumb and backdrop for each collection from the artwork of the titles inside it. It is drawn on your server and only redrawn when a collection changes.</p>
-        <label>Collection artwork <select id="artMode"><option value="Replace">Make and keep up to date</option><option value="FillMissing">Only where there is none</option><option value="Off">Off</option></select></label>
-        <label style="margin-left:1em">Style <select id="artStyle"><option value="Mosaic">Mosaic of posters</option><option value="Title">Colour title card</option></select></label>
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Franchises</h3>
+          <label class="lo-check"><input type="checkbox" id="autoFranchise"><div>Group movies from the same franchise (Star Wars, Indiana Jones…)<div class="lo-note">Uses the collection TMDb gives each movie, so your Movies library needs the TMDb metadata provider.</div></div></label>
+          <div class="lo-grid">
+            <label class="lo-f"><span>A franchise needs at least</span><input type="number" id="franchiseMin" min="2"></label>
+            <label class="lo-f"><span>Order inside a franchise</span><select id="franchiseOrder"></select></label>
+          </div>
+          <div class="lo-note">"Story order" has a built-in list for Star Wars and Indiana Jones; every other franchise stays in release order. For your own order, make a collection of your own, choose Story order and use the arrows in its preview.</div>
+          <div id="franchiseHint" class="lo-warn"></div>
+        </div></div>
 
-        <h2>General</h2>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="removeNonMatching" /><span>Remove items that stop matching</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnChange" /><span>Re-sync a couple of minutes after movies or shows are added or their metadata changes</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="usePublic" /><span>Use the public Wikidata database for genre lists (only a genre id is sent, nothing about your library)</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="syncOnStart" /><span>Sync about a minute after the server starts</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="deleteRemoved" /><span>Delete a collection when its rule is removed or disabled (media files are never touched)</span></label></div>
-        <label>Minimum items for a rule's collection <input type="number" id="minItems" min="1" style="width:5em"></label><br><br>
-        <label>Items per home screen row (needs Home Screen Sections) <input type="number" id="homeRowLimit" min="1" style="width:5em"></label>
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Countries</h3>
+          <p class="lo-note" style="margin-top:0">Only the countries you pick get a collection, named like "Filipino Movies" or "British Movies".</p>
+          <label class="lo-f"><span>Countries, comma separated</span><input type="text" id="autoCountries" placeholder="Philippines, United Kingdom"></label>
+          <div class="lo-note" style="margin-top:.5em">In your library (click to add or remove):</div>
+          <div id="countryChips"></div>
+        </div></div>
 
-        <br><br>
-        <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
-        <button is="emby-button" type="button" class="raised block" id="syncNow"><span>Save, then sync collections now</span></button>
-        <div id="syncStatus" style="margin-top:1em"></div>
-      </form>
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Genres</h3>
+          <label class="lo-check"><input type="checkbox" id="autoGenre"><div>One collection per genre ("Comedy Movies")</div></label>
+          <div class="lo-grid">
+            <label class="lo-f"><span>Only if there are at least</span><input type="number" id="autoMin" min="1"></label>
+            <label class="lo-f"><span>Order inside genre and country collections</span><select id="autoOrder"></select></label>
+          </div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Applies to all automatic collections</h3>
+          <div class="lo-grid">
+            <label class="lo-f"><span>Made for</span><select id="autoType"><option value="Movie">Movies</option><option value="Series">Shows</option><option value="Both">Movies and shows</option></select></label>
+            <label class="lo-f"><span>Put these collections first on the page</span><select id="collectionOrder">
+              <option value="Name">A to Z</option><option value="Newest">Newest releases first</option><option value="Oldest">Oldest releases first</option>
+              <option value="Rating">Highest rated first</option><option value="Size">Biggest first</option></select></label>
+          </div>
+          <label class="lo-check"><input type="checkbox" id="autoGroup"><div>Keep them in groups on the Collections page: franchises, then countries, then genres</div></label>
+          <label class="lo-check"><input type="checkbox" id="autoHome"><div>Also show them as home screen rows<div class="lo-note">Can get crowded. Needs the Home Screen Sections plugin.</div></div></label>
+        </div></div>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="lo-panel" data-panel="overview">
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Last sync</h3>
+          <div id="statusBox" class="lo-note">Loading…</div>
+          <div class="lo-tools"><button type="button" class="lo-btn" id="btnPlan">Preview what the next sync would change</button></div>
+          <div id="planBox"></div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
+          <h3>What is in my library</h3>
+          <div class="lo-tools"><input type="search" id="valSearch" placeholder="Filter genres, tags, countries…"></div>
+          <div class="lo-note">Click a value to add it to the filter box you last used while editing a collection.</div>
+          <div id="valuesBody" class="lo-vals">Loading…</div>
+        </div></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="lo-panel" data-panel="settings">
+        <div class="lo-card static"><div class="lo-body">
+          <h3>When it runs</h3>
+          <label class="lo-check"><input type="checkbox" id="syncOnStart"><div>About a minute after the server starts</div></label>
+          <label class="lo-check"><input type="checkbox" id="syncOnChange"><div>A couple of minutes after movies or shows are added or their metadata changes</div></label>
+          <div class="lo-note">It also runs daily at 4 AM (Dashboard, Scheduled Tasks), and when you press "Save and sync now".</div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Artwork</h3>
+          <p class="lo-note" style="margin-top:0">Poster, thumb and backdrop for each collection, drawn on your server from the artwork of the titles inside. Only redrawn when a collection changes.</p>
+          <div class="lo-grid">
+            <label class="lo-f"><span>Collection artwork</span><select id="artMode"><option value="Replace">Make and keep up to date</option><option value="FillMissing">Only where there is none</option><option value="Off">Off</option></select></label>
+            <label class="lo-f"><span>Style</span><select id="artStyle"><option value="Mosaic">Mosaic of posters</option><option value="Title">Colour title card</option></select></label>
+          </div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Keeping things tidy</h3>
+          <label class="lo-check"><input type="checkbox" id="removeNonMatching"><div>Take titles out of a collection when they stop matching</div></label>
+          <label class="lo-check"><input type="checkbox" id="deleteRemoved"><div>Delete a collection when its rule is removed or turned off<div class="lo-note">Only collections this plugin made. Your media is never touched.</div></div></label>
+          <label class="lo-check"><input type="checkbox" id="usePublic"><div>Use the public Wikidata database for genre lists like "Christmas film"<div class="lo-note">Only a genre id is sent. Nothing about your library leaves the server.</div></div></label>
+          <div class="lo-grid">
+            <label class="lo-f"><span>Smallest collection to make</span><input type="number" id="minItems" min="1"></label>
+            <label class="lo-f"><span>Titles per home screen row</span><input type="number" id="homeRowLimit" min="1"></label>
+          </div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
+          <h3>Backup</h3>
+          <p class="lo-note" style="margin-top:0">Save your collections and settings to a file, or load them back (for example on another server). Loading fills the page; nothing changes until you press Save.</p>
+          <div class="lo-tools">
+            <button type="button" class="lo-btn" id="btnExport">Download settings</button>
+            <button type="button" class="lo-btn" id="btnImport">Load settings from a file…</button>
+            <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="lo-bar">
+      <span class="dirty" id="dirtyMsg">Unsaved changes</span>
+      <span class="msg" id="barMsg"></span>
+      <button type="button" class="lo-btn" id="btnSave">Save</button>
+      <button type="button" class="lo-btn primary" id="btnSync">Save and sync now</button>
     </div>
   </div>
+
   <script type="text/javascript">
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
-      var page = document.querySelector('#OrganizerPageP5');
-      var cfg = null, lastList = null;
+      var PAGE_VERSION = 6;
+      var page = document.querySelector('#OrganizerPageP6');
+      var cfg = null, lastList = null, dirty = false, values = null;
 
-      var listFields = [
-        ['Genres', 'Genres'], ['Tags', 'Tags'], ['Countries', 'Countries (production)'], ['Studios', 'Studios'],
-        ['OfficialRatings', 'Official ratings'], ['TitleKeywords', 'Title keywords'], ['Languages', 'Audio languages'], ['Franchises', 'Franchises (TMDb collection names, movies)']
-      ];
-      var excludeFields = [
-        ['ExcludeGenres', 'Not these genres'], ['ExcludeTags', 'Not these tags'],
-        ['ExcludeCountries', 'Not these countries'], ['ExcludeKeywords', 'Not these title words']
-      ];
-      var sortChoices = ['PremiereDate', 'SortName', 'CommunityRating', 'DateAdded', 'Random'];
-      var templates = [
-        { n: 'Kids and family', r: { OfficialRatings: ['G', 'PG', 'TV-Y', 'TV-G', 'TV-PG'], Genres: ['Family', 'Animation'], Match: 'Any' } },
-        { n: 'Top rated (8+)', r: { MinCommunityRating: 8, HomeSort: 'CommunityRating' } },
-        { n: '1980s', r: { YearFrom: 1980, YearTo: 1989 } },
-        { n: '1990s', r: { YearFrom: 1990, YearTo: 1999 } },
-        { n: '2000s', r: { YearFrom: 2000, YearTo: 2009 } },
-        { n: 'Korean movies', r: { Languages: ['Korean'], Countries: ['South Korea'], Match: 'Any' } },
-        { n: 'Japanese anime', r: { Countries: ['Japan'], Genres: ['Animation'], Match: 'All' } },
-        { n: 'Tagalog / Filipino audio', r: { Languages: ['Filipino'] } },
-        { n: 'Christmas (curated)', r: { PublicGenres: ['Q28026639|Christmas film'], Genres: ['Holiday'], Tags: ['christmas'], MinFieldMatches: 2 } },
-        { n: 'Halloween', r: { Tags: ['halloween'], TitleKeywords: ['halloween'], Genres: ['Horror'], Match: 'Any' } },
-        { n: 'Documentaries', r: { Genres: ['Documentary'] } },
-        { n: 'Recently added', r: { HomeSort: 'DateAdded' } }
-      ];
-
+      function $(s, r) { return (r || page).querySelector(s); }
+      function $$(s, r) { return Array.prototype.slice.call((r || page).querySelectorAll(s)); }
       function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
       function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-      function sel(k, opts, cur) {
-        return '<select data-k="' + k + '">' + opts.map(function (o) {
-          return '<option' + (o === cur ? ' selected' : '') + '>' + o + '</option>';
-        }).join('') + '</select>';
-      }
-      function textList(f, r) {
-        return '<label style="display:block;margin:.3em 0">' + f[1] + '<br><input type="text" data-list="' + f[0] + '" value="' +
-          esc((r[f[0]] || []).join(', ')) + '" style="width:100%"></label>';
-      }
+      function csv(s) { return String(s || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean); }
 
-      function renderRule(r) {
-        var h = '<fieldset class="rule" style="margin:1.5em 0;padding:1em;border:1px solid #555;">' +
-          '<img class="artThumb" alt="" style="float:right;width:84px;margin:0 0 .5em 1em;border-radius:4px;display:none">' +
-          '<label><input type="checkbox" data-k="Enabled"' + (r.Enabled !== false ? ' checked' : '') + '> Enabled</label>' +
-          '<button type="button" class="del" style="float:right">Delete rule</button><br><br>' +
-          '<label>Collection name<br><input type="text" data-k="Name" value="' + esc(r.Name) + '" style="width:100%"></label>' +
-          '<div class="looseWarn" style="display:none;margin:.6em 0;padding:.6em;border:1px solid #c80;color:#fb3">Loose rule: any single match puts a title in, so one stray tag or word is enough. ' +
-          '<button type="button" class="makeStrict">Require 2 fields</button></div><br>' +
-          '<label>Media type ' + sel('MediaType', ['Movie', 'Series', 'Both'], r.MediaType || 'Movie') + '</label> ' +
-          '<label>Combine fields ' + sel('Match', ['Any', 'All'], r.Match || 'Any') + '</label> ' +
-          '<label title="Stricter: an item needs this many of your filled-in fields to match. Two fixes most stray-tag false positives.">Fields that must match <select data-num="MinFieldMatches">' +
-          [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + (n === (r.MinFieldMatches || 1) ? ' selected' : '') + '>' + (n === 1 ? '1 (any)' : 'at least ' + n) + '</option>'; }).join('') + '</select></label> ' +
-          '<label>Position <input type="number" data-num="Position" value="' + esc(r.Position || 0) + '" style="width:5em"></label><br><br>';
-        listFields.forEach(function (f) { h += textList(f, r); });
-        h += '<div style="margin:.6em 0"><b>Public database lists</b> <span style="opacity:.7">(Wikidata genres; a title on the list counts as a match)</span>' +
-          '<div class="pubList"></div>' +
-          '<input type="text" class="pubFind" placeholder="Search a genre, e.g. Christmas film" style="width:100%;margin-top:.3em">' +
-          '<div class="pubResults"></div></div>';
-        h += '<details class="fixes" style="margin:.8em 0"' + (((r.ExcludeItems || []).length || (r.IncludeItems || []).length) ? ' open' : '') + '><summary>Corrections: never / always include specific titles</summary>' +
-          '<div style="margin:.5em 0"><b>Never in this collection:</b><div class="exclList"></div></div>' +
-          '<div style="margin:.5em 0"><b>Always in this collection:</b><div class="inclList"></div></div>' +
-          '<label style="display:block;margin:.5em 0">Find a title to correct<br><input type="text" class="findBox" placeholder="Type a movie or show name" style="width:100%"></label>' +
-          '<div class="findResults"></div></details>';
-        h += '<details style="margin:.8em 0"><summary>Leave out</summary>';
-        excludeFields.forEach(function (f) { h += textList(f, r); });
-        h += '</details>';
-        h += '<label>Year from <input type="number" data-num="YearFrom" value="' + esc(r.YearFrom) + '" style="width:6em"></label> ' +
-          '<label>to <input type="number" data-num="YearTo" value="' + esc(r.YearTo) + '" style="width:6em"></label> ' +
-          '<label>Min rating <input type="number" step="0.1" data-num="MinCommunityRating" value="' + esc(r.MinCommunityRating) + '" style="width:5em"></label><br><br>' +
-          '<label>Order on the collection page ' + sel('ItemOrder', ['PremiereDate', 'SortName'], r.ItemOrder || 'PremiereDate') + '</label><br><br>' +
-          '<label><input type="checkbox" data-k="ShowOnHome"' + (r.ShowOnHome !== false ? ' checked' : '') + '> Show on home screen</label> ' +
-          '<label>sorted by ' + sel('HomeSort', sortChoices, r.HomeSort || 'PremiereDate') + '</label> ' +
-          '<label><input type="checkbox" data-k="HomeDescending"' + (r.HomeDescending !== false ? ' checked' : '') + '> highest / newest first</label><br><br>' +
-          '<label><input type="checkbox" data-k="KeepOwnArtwork"' + (r.KeepOwnArtwork ? ' checked' : '') + '> Keep my own artwork for this collection</label> ' +
-          '<label>Accent colour <input type="text" data-k="AccentColor" value="' + esc(r.AccentColor || '') + '" placeholder="#RRGGBB (optional)" style="width:9em"></label><br><br>' +
-          '<button type="button" class="preview">Preview matches</button> <span class="previewCount"></span>' +
-          '<div class="previewList" style="margin-top:.5em;font-size:.9em"></div>' +
-          '</fieldset>';
-        var node = el(h);
-        node._pub = (r.PublicGenres || []).slice();
-        node.addEventListener('input', function () { updateWarn(node); });
-        node.addEventListener('change', function () { updateWarn(node); });
-        node.querySelector('.makeStrict').onclick = function () { node.querySelector('[data-num=MinFieldMatches]').value = '2'; updateWarn(node); };
-        node._excl = (r.ExcludeItems || []).slice();
-        node._incl = (r.IncludeItems || []).slice();
-        renderLists(node);
-        wireSearch(node);
-        wirePublic(node);
-        updateWarn(node);
-        node.querySelector('.del').onclick = function () { node.remove(); };
-        node.querySelectorAll('[data-list]').forEach(function (i) { i.onfocus = function () { lastList = i; }; });
-        node.querySelector('.preview').onclick = function () { preview(node); };
-        return node;
-      }
+      var ORDER = [['Release', 'Release date'], ['Year', 'Year'], ['Name', 'Name (A to Z)'], ['Rating', 'Rating'], ['Runtime', 'Runtime'], ['DateAdded', 'Date added'], ['Story', 'Story order']];
+      var HOME_ORDER = [['Same', 'Same as the collection'], ['Release', 'Release date'], ['Year', 'Year'], ['Name', 'Name'], ['Rating', 'Rating'], ['Runtime', 'Runtime'], ['DateAdded', 'Date added'], ['Random', 'Random']];
+      var FRANCHISE_ORDER = [['Release', 'Release order'], ['Story', 'Story order (where known)'], ['Year', 'Year'], ['Name', 'Name (A to Z)'], ['Rating', 'Rating']];
+      var AUTO_ORDER = [['Name', 'Name (A to Z)'], ['Release', 'Release date'], ['Year', 'Year'], ['Rating', 'Rating'], ['DateAdded', 'Date added']];
 
-      function readRule(n) {
-        var r = {};
-        n.querySelectorAll('[data-k]').forEach(function (i) { r[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value; });
-        n.querySelectorAll('[data-list]').forEach(function (i) {
-          r[i.dataset.list] = i.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        });
-        n.querySelectorAll('[data-num]').forEach(function (i) { r[i.dataset.num] = i.value === '' ? null : Number(i.value); });
-        r.PublicGenres = (n._pub || []).slice();
-        r.ExcludeItems = (n._excl || []).slice();
-        r.IncludeItems = (n._incl || []).slice();
-        r.MinFieldMatches = r.MinFieldMatches || 1;
-        r.Position = r.Position || 0;
-        return r;
+      function normOrder(o) {
+        return ({ SortName: 'Name', Name: 'Name', ProductionYear: 'Year', Year: 'Year', CommunityRating: 'Rating', Rating: 'Rating', Runtime: 'Runtime',
+          DateAdded: 'DateAdded', DateCreated: 'DateAdded', Story: 'Story', Random: 'Random' })[o] || 'Release';
       }
-      function readRules() { return Array.prototype.map.call(page.querySelectorAll('.rule'), readRule); }
-
-      function updateWarn(node) {
-        var r = readRule(node);
-        var filled = ['Genres', 'Tags', 'Countries', 'Studios', 'OfficialRatings', 'TitleKeywords', 'Languages'].filter(function (k) { return (r[k] || []).length; }).length;
-        var loose = r.Match !== 'All' && (r.MinFieldMatches || 1) < 2 && filled >= 2 && !(r.PublicGenres || []).length;
-        node.querySelector('.looseWarn').style.display = loose ? 'block' : 'none';
+      function opts(list, cur) {
+        return list.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === cur ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
       }
+      function fillSelect(id, list, cur) { $(id).innerHTML = opts(list, cur); }
 
+      var FILTERS = [['Genres', 'Genres'], ['Tags', 'Tags'], ['Countries', 'Countries'], ['TitleKeywords', 'Words in the title']];
+      var MORE = [['Studios', 'Studios'], ['OfficialRatings', 'Age ratings (PG, TV-MA…)'], ['Languages', 'Audio languages'], ['Franchises', 'Franchises (TMDb collection names)']];
+      var LEAVE = [['ExcludeGenres', 'Not these genres'], ['ExcludeTags', 'Not these tags'], ['ExcludeCountries', 'Not these countries'], ['ExcludeKeywords', 'Not these title words']];
+      var templates = [
+        { n: 'Blank collection', r: {} },
+        { n: 'Kids and family', r: { OfficialRatings: ['G', 'PG', 'TV-Y', 'TV-G', 'TV-PG'], Genres: ['Family', 'Animation'], Match: 'Any' } },
+        { n: 'Top rated (8 and up)', r: { MinCommunityRating: 8, ItemOrder: 'Rating', ItemDescending: true } },
+        { n: 'Recently added', r: { ItemOrder: 'DateAdded', ItemDescending: true } },
+        { n: 'The 1980s', r: { YearFrom: 1980, YearTo: 1989 } },
+        { n: 'The 1990s', r: { YearFrom: 1990, YearTo: 1999 } },
+        { n: 'The 2000s', r: { YearFrom: 2000, YearTo: 2009 } },
+        { n: 'Korean movies', r: { Languages: ['Korean'], Countries: ['South Korea'], Match: 'Any' } },
+        { n: 'Japanese anime', r: { Countries: ['Japan'], Genres: ['Animation'], Match: 'All' } },
+        { n: 'Filipino audio', r: { Languages: ['Filipino'] } },
+        { n: 'Christmas (curated)', r: { PublicGenres: ['Q28026639|Christmas film'], Genres: ['Holiday'], Tags: ['christmas'], MinFieldMatches: 2, ItemOrder: 'Name' } },
+        { n: 'Halloween', r: { Tags: ['halloween'], TitleKeywords: ['halloween'], Genres: ['Horror'], Match: 'Any' } },
+        { n: 'Documentaries', r: { Genres: ['Documentary'] } },
+        { n: 'Shortest first', r: { ItemOrder: 'Runtime' } }
+      ];
+
+      // ---------- small helpers ----------
+      function setDirty(v) {
+        dirty = v;
+        $('#dirtyMsg').style.display = v ? 'inline' : 'none';
+      }
+      function say(msg, ms) {
+        var m = $('#barMsg'); m.textContent = msg || '';
+        if (msg && ms) { setTimeout(function () { if (m.textContent === msg) { m.textContent = ''; } }, ms); }
+      }
+      function ajax(type, path, body) {
+        var o = { type: type, url: ApiClient.getUrl(path), dataType: 'json' };
+        if (body !== undefined) { o.data = JSON.stringify(body); o.contentType = 'application/json'; }
+        return ApiClient.ajax(o);
+      }
       function entryId(e) { return String(e).split('|')[0]; }
       function entryLabel(e) { var p = String(e).split('|'); return p.slice(1).join('|') || p[0]; }
       function makeEntry(id, name, year) { return id + '|' + name + (year ? ' (' + year + ')' : ''); }
       function without(list, id) { return list.filter(function (e) { return entryId(e) !== id; }); }
       function has(list, id) { return list.some(function (e) { return entryId(e) === id; }); }
 
+      // ---------- tabs ----------
+      $$('.lo-tab').forEach(function (b) {
+        b.onclick = function () {
+          $$('.lo-tab').forEach(function (x) { x.classList.toggle('on', x === b); });
+          $$('.lo-panel').forEach(function (p) { p.classList.toggle('on', p.dataset.panel === b.dataset.tab); });
+          if (b.dataset.tab === 'overview') { loadStatus(); }
+          try { sessionStorage.setItem('loTab', b.dataset.tab); } catch (e) { }
+        };
+      });
+
+      // ---------- rule cards ----------
+      function summarize(r) {
+        var bits = [];
+        bits.push(r.MediaType === 'Series' ? 'Shows' : r.MediaType === 'Both' ? 'Movies + shows' : 'Movies');
+        var n = 0;
+        ['Genres', 'Tags', 'Countries', 'Studios', 'OfficialRatings', 'TitleKeywords', 'Languages', 'Franchises', 'PublicGenres'].forEach(function (k) { n += (r[k] || []).length; });
+        if (n) { bits.push(n + ' filter value' + (n === 1 ? '' : 's')); }
+        var lab = (ORDER.filter(function (o) { return o[0] === normOrder(r.ItemOrder); })[0] || ['', ''])[1];
+        bits.push(lab.toLowerCase() + (r.ItemDescending ? ', reversed' : ''));
+        return bits;
+      }
+
+      function textField(f, r) {
+        return '<label class="lo-f"><span>' + f[1] + '</span><input type="text" data-list="' + f[0] + '" value="' + esc((r[f[0]] || []).join(', ')) + '"></label>';
+      }
+
+      function renderRule(r) {
+        var ord = normOrder(r.ItemOrder);
+        var home = r.HomeSort && r.HomeSort !== 'Same' ? normOrder(r.HomeSort) : 'Same';
+        var h = '<div class="lo-card rule">' +
+          '<div class="lo-head">' +
+            '<span class="lo-caret">&#9654;</span>' +
+            '<img class="lo-art" alt="">' +
+            '<div class="lo-name"><input type="text" data-k="Name" value="' + esc(r.Name) + '" placeholder="Collection name"></div>' +
+            '<span class="lo-badges"></span>' +
+            '<label class="lo-check" style="margin:0" title="Turn this collection on or off"><input type="checkbox" data-k="Enabled"' + (r.Enabled !== false ? ' checked' : '') + '>On</label>' +
+          '</div>' +
+          '<div class="lo-body">' +
+            '<h3>What goes in</h3>' +
+            '<div class="lo-grid">' +
+              '<label class="lo-f"><span>Type</span><select data-k="MediaType">' + opts([['Movie', 'Movies'], ['Series', 'Shows'], ['Both', 'Movies and shows']], r.MediaType || 'Movie') + '</select></label>' +
+              FILTERS.map(function (f) { return textField(f, r); }).join('') +
+            '</div>' +
+            '<div class="lo-warn looseWarn">Loose rule: any single match puts a title in, so one stray tag or word is enough. <button type="button" class="lo-btn small makeStrict">Require 2 fields</button></div>' +
+            '<details class="more"><summary>More filters</summary>' +
+              '<div class="lo-grid">' + MORE.map(function (f) { return textField(f, r); }).join('') +
+                '<label class="lo-f"><span>Year from</span><input type="number" data-num="YearFrom" value="' + esc(r.YearFrom) + '"></label>' +
+                '<label class="lo-f"><span>Year to</span><input type="number" data-num="YearTo" value="' + esc(r.YearTo) + '"></label>' +
+                '<label class="lo-f"><span>Minimum rating</span><input type="number" step="0.1" data-num="MinCommunityRating" value="' + esc(r.MinCommunityRating) + '"></label>' +
+                '<label class="lo-f"><span>Combine filters</span><select data-k="Match">' + opts([['Any', 'Any filter can match'], ['All', 'Every filter must match']], r.Match || 'Any') + '</select></label>' +
+                '<label class="lo-f" title="Stops one stray tag from putting a title in"><span>Filters a title must match</span><select data-num="MinFieldMatches">' +
+                  [1, 2, 3].map(function (n) { return '<option value="' + n + '"' + (n === (r.MinFieldMatches || 1) ? ' selected' : '') + '>At least ' + n + '</option>'; }).join('') + '</select></label>' +
+              '</div>' +
+              '<h3>Leave out</h3><div class="lo-grid">' + LEAVE.map(function (f) { return textField(f, r); }).join('') + '</div>' +
+              '<h3>Public database lists</h3><div class="lo-note">Curated genre lists from Wikidata. A title on the list counts as a match.</div>' +
+              '<div class="pubList"></div>' +
+              '<input type="search" class="pubFind" placeholder="Search a genre, for example Christmas film" style="margin-top:.4em"><div class="pubResults"></div>' +
+            '</details>' +
+
+            '<h3>Order</h3>' +
+            '<div class="lo-grid">' +
+              '<label class="lo-f"><span>Sort titles by</span><select data-k="ItemOrder" class="selOrder">' + opts(ORDER, ord) + '</select></label>' +
+              '<label class="lo-f"><span>Direction</span><select data-bool="ItemDescending">' + opts([['false', 'Ascending (oldest, lowest, A to Z first)'], ['true', 'Descending (newest, highest, Z to A first)']], r.ItemDescending ? 'true' : 'false') + '</select></label>' +
+              '<label class="lo-f" title="Pins this collection near the top of the Collections page. Lower comes first."><span>Pin to position (0 = don\'t pin)</span><input type="number" data-num="Position" min="0" value="' + esc(r.Position || 0) + '"></label>' +
+            '</div>' +
+
+            '<h3>Home screen</h3>' +
+            '<div class="lo-grid">' +
+              '<label class="lo-check" style="margin:0"><input type="checkbox" data-k="ShowOnHome"' + (r.ShowOnHome !== false ? ' checked' : '') + '><div>Show as a home screen row</div></label>' +
+              '<label class="lo-f"><span>Row order</span><select data-k="HomeSort" class="selHome">' + opts(HOME_ORDER, home) + '</select></label>' +
+              '<label class="lo-check homeDesc" style="margin:0"><input type="checkbox" data-k="HomeDescending"' + (r.HomeDescending !== false ? ' checked' : '') + '><div>Highest or newest first</div></label>' +
+              '<label class="lo-check" style="margin:0"><input type="checkbox" data-k="HideWatched"' + (r.HideWatched ? ' checked' : '') + '><div>Hide titles I have watched (on the row)</div></label>' +
+            '</div>' +
+
+            '<details class="look"><summary>Artwork</summary>' +
+              '<div class="lo-grid">' +
+                '<label class="lo-check" style="margin:0"><input type="checkbox" data-k="KeepOwnArtwork"' + (r.KeepOwnArtwork ? ' checked' : '') + '><div>Keep my own artwork for this collection</div></label>' +
+                '<label class="lo-f"><span>Accent colour</span><input type="text" data-k="AccentColor" value="' + esc(r.AccentColor || '') + '" placeholder="#RRGGBB (optional)"></label>' +
+              '</div></details>' +
+
+            '<details class="fixes"' + (((r.ExcludeItems || []).length || (r.IncludeItems || []).length) ? ' open' : '') + '><summary>Corrections: always or never include a title</summary>' +
+              '<div style="margin:.5em 0"><b>Never in this collection</b><div class="exclList"></div></div>' +
+              '<div style="margin:.5em 0"><b>Always in this collection</b><div class="inclList"></div></div>' +
+              '<input type="search" class="findBox" placeholder="Find a movie or show to correct"><div class="findResults"></div></details>' +
+
+            '<div class="lo-tools" style="margin-top:1.2em">' +
+              '<button type="button" class="lo-btn preview">Preview this collection</button>' +
+              '<span class="previewCount lo-note"></span>' +
+              '<span style="flex:1"></span>' +
+              '<button type="button" class="lo-btn small dup">Duplicate</button>' +
+              '<button type="button" class="lo-btn small danger del">Delete</button>' +
+            '</div>' +
+            '<div class="storyNote lo-note" style="display:none"></div>' +
+            '<div class="previewList" style="margin-top:.4em"></div>' +
+          '</div></div>';
+        var node = el(h);
+        node._src = r;
+        node._pub = (r.PublicGenres || []).slice();
+        node._excl = (r.ExcludeItems || []).slice();
+        node._incl = (r.IncludeItems || []).slice();
+        node._story = (r.StoryOrder || []).slice();
+        node._rows = null;
+        wireRule(node);
+        return node;
+      }
+
+      function wireRule(node) {
+        var head = $('.lo-head', node);
+        head.addEventListener('click', function (e) {
+          if (e.target.closest('input,label,button,select')) { return; }
+          node.classList.toggle('open');
+        });
+        node.addEventListener('input', function () { setDirty(true); refreshRule(node); });
+        node.addEventListener('change', function (e) {
+          setDirty(true); refreshRule(node);
+          if (e.target.classList.contains('selOrder') && e.target.value === 'Story') { preview(node); }
+          else if ((e.target.classList.contains('selOrder') || e.target.dataset.bool === 'ItemDescending') && node._rows) { preview(node); }
+        });
+        $('.makeStrict', node).onclick = function () { $('[data-num=MinFieldMatches]', node).value = '2'; setDirty(true); refreshRule(node); };
+        $('.del', node).onclick = function () {
+          if (confirm('Delete the rule "' + (readRule(node).Name || 'this collection') + '"? The collection itself stays until you turn on "Delete a collection when its rule is removed".')) {
+            node.remove(); setDirty(true); updateEmpty();
+          }
+        };
+        $('.dup', node).onclick = function () {
+          var c = readRule(node); c.Name = (c.Name || 'Collection') + ' copy'; c.Position = 0;
+          var n = renderRule(c); node.after(n); n.classList.add('open'); setDirty(true); refreshRule(n);
+        };
+        $('.preview', node).onclick = function () { preview(node); };
+        $$('[data-list]', node).forEach(function (i) { i.onfocus = function () { lastList = i; }; });
+        renderLists(node); wireSearch(node); wirePublic(node); refreshRule(node);
+      }
+
+      function readRule(n) {
+        var r = Object.assign({}, n._src);
+        $$('[data-k]', n).forEach(function (i) { r[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value; });
+        $$('[data-bool]', n).forEach(function (i) { r[i.dataset.bool] = i.value === 'true'; });
+        $$('[data-list]', n).forEach(function (i) { r[i.dataset.list] = csv(i.value); });
+        $$('[data-num]', n).forEach(function (i) { r[i.dataset.num] = i.value === '' ? null : Number(i.value); });
+        r.PublicGenres = n._pub.slice();
+        r.ExcludeItems = n._excl.slice();
+        r.IncludeItems = n._incl.slice();
+        r.StoryOrder = n._story.slice();
+        r.MinFieldMatches = r.MinFieldMatches || 1;
+        r.Position = r.Position || 0;
+        return r;
+      }
+      function ruleNodes() { return $$('.rule'); }
+
+      function refreshRule(node) {
+        var r = readRule(node);
+        var filled = ['Genres', 'Tags', 'Countries', 'Studios', 'OfficialRatings', 'TitleKeywords', 'Languages'].filter(function (k) { return (r[k] || []).length; }).length;
+        var loose = r.Match !== 'All' && (r.MinFieldMatches || 1) < 2 && filled >= 2 && !(r.PublicGenres || []).length;
+        $('.looseWarn', node).style.display = loose ? 'block' : 'none';
+        $('.homeDesc', node).style.display = r.HomeSort === 'Same' || r.HomeSort === 'Random' ? 'none' : 'flex';
+        var b = r.Enabled === false ? '<span class="lo-chip off">Off</span>' : '';
+        if (node._count != null && r.Enabled !== false) {
+          var low = node._count < (cfg ? cfg.MinItems : 2);
+          b += '<span class="lo-chip ' + (low ? 'warn' : 'ok') + '">' + node._count + ' title' + (node._count === 1 ? '' : 's') + (low ? ' (too few)' : '') + '</span>';
+        }
+        summarize(r).forEach(function (t) { b += '<span class="lo-chip">' + esc(t) + '</span>'; });
+        $('.lo-badges', node).innerHTML = b;
+        node.dataset.search = ((r.Name || '') + ' ' + summarize(r).join(' ')).toLowerCase();
+      }
+
+      function updateEmpty() { $('#noRules').style.display = ruleNodes().length ? 'none' : 'block'; }
+
       function chipList(box, list, node, kind) {
         box.innerHTML = '';
-        if (!list.length) { box.appendChild(el('<div style="opacity:.6;font-size:.9em">None</div>')); return; }
+        if (!list.length) { box.appendChild(el('<div class="lo-note">None</div>')); return; }
         list.forEach(function (e) {
-          var row = el('<div style="margin:.2em 0"><span>' + esc(entryLabel(e)) + '</span> <a href="#" style="margin-left:.6em">undo</a></div>');
-          row.querySelector('a').onclick = function (ev) {
-            ev.preventDefault();
-            node[kind] = without(node[kind], entryId(e));
-            renderLists(node);
-          };
+          var row = el('<div class="lo-row"><span class="t">' + esc(entryLabel(e)) + '</span><button type="button" class="lo-btn small">Undo</button></div>');
+          $('button', row).onclick = function () { node[kind] = without(node[kind], entryId(e)); renderLists(node); setDirty(true); refreshRule(node); };
           box.appendChild(row);
         });
       }
+      function renderLists(node) {
+        chipList($('.pubList', node), node._pub, node, '_pub');
+        chipList($('.exclList', node), node._excl, node, '_excl');
+        chipList($('.inclList', node), node._incl, node, '_incl');
+      }
+      function correct(node, kind, id, name, year) {
+        var other = kind === '_excl' ? '_incl' : '_excl';
+        node[other] = without(node[other], id);
+        if (!has(node[kind], id)) { node[kind].push(makeEntry(id, name, year)); }
+        renderLists(node); setDirty(true);
+        $('details.fixes', node).open = true;
+      }
+
       function wirePublic(node) {
-        var box = node.querySelector('.pubFind'), out = node.querySelector('.pubResults'), timer = null;
+        var box = $('.pubFind', node), out = $('.pubResults', node), timer = null;
         box.addEventListener('input', function () {
           clearTimeout(timer);
           timer = setTimeout(function () {
@@ -204,50 +460,34 @@
             ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('LibraryOrganizer/WikidataSearch', { q: q }), dataType: 'json' }).then(function (hits) {
               out.innerHTML = '';
               hits.forEach(function (h) {
-                var row = el('<div style="margin:.3em 0"><b>' + esc(h.Label) + '</b> <span style="opacity:.7">' + esc(h.Description || '') +
-                  '</span> <button type="button" style="margin-left:.6em">Add</button></div>');
-                row.querySelector('button').onclick = function () {
+                var row = el('<div class="lo-row"><span class="t"><b>' + esc(h.Label) + '</b> <span class="why">' + esc(h.Description || '') + '</span></span><button type="button" class="lo-btn small">Add</button></div>');
+                $('button', row).onclick = function () {
                   if (!has(node._pub, h.Id)) { node._pub.push(h.Id + '|' + h.Label); }
-                  renderLists(node); out.innerHTML = ''; box.value = '';
+                  renderLists(node); out.innerHTML = ''; box.value = ''; setDirty(true); refreshRule(node);
                 };
                 out.appendChild(row);
               });
               if (!hits.length) { out.textContent = 'Nothing found.'; }
-            }).catch(function () { out.textContent = 'Could not reach Wikidata.'; });
+            }).catch(function () { out.textContent = 'Could not reach Wikidata (is the public database turned on in Settings?).'; });
           }, 400);
         });
       }
 
-      function renderLists(node) {
-        chipList(node.querySelector('.pubList'), node._pub, node, '_pub');
-        chipList(node.querySelector('.exclList'), node._excl, node, '_excl');
-        chipList(node.querySelector('.inclList'), node._incl, node, '_incl');
-      }
-      function correct(node, kind, id, name, year) {
-        var other = kind === '_excl' ? '_incl' : '_excl';
-        node[other] = without(node[other], id);
-        if (!has(node[kind], id)) { node[kind].push(makeEntry(id, name, year)); }
-        renderLists(node);
-        node.querySelector('details.fixes').open = true;
-      }
-
       function wireSearch(node) {
-        var box = node.querySelector('.findBox'), out = node.querySelector('.findResults'), timer = null;
+        var box = $('.findBox', node), out = $('.findResults', node), timer = null;
         box.addEventListener('input', function () {
           clearTimeout(timer);
           timer = setTimeout(function () {
             var q = box.value.trim();
             if (q.length < 2) { out.innerHTML = ''; return; }
-            ApiClient.getItems(ApiClient.getCurrentUserId(), {
-              searchTerm: q, IncludeItemTypes: 'Movie,Series', Recursive: true, Limit: 8, Fields: 'ProductionYear'
-            }).then(function (res) {
+            ApiClient.getItems(ApiClient.getCurrentUserId(), { searchTerm: q, IncludeItemTypes: 'Movie,Series', Recursive: true, Limit: 8, Fields: 'ProductionYear' }).then(function (res) {
               out.innerHTML = '';
               (res.Items || []).forEach(function (it) {
-                var row = el('<div style="margin:.3em 0"><span>' + esc(it.Name) + (it.ProductionYear ? ' (' + it.ProductionYear + ')' : '') +
-                  '</span> <button type="button" class="never" style="margin-left:.6em">Never include</button> <button type="button" class="always">Always include</button></div>');
+                var row = el('<div class="lo-row"><span class="t">' + esc(it.Name) + (it.ProductionYear ? ' (' + it.ProductionYear + ')' : '') +
+                  '</span><button type="button" class="lo-btn small never">Never include</button><button type="button" class="lo-btn small always">Always include</button></div>');
                 var id = String(it.Id).replace(/-/g, '');
-                row.querySelector('.never').onclick = function () { correct(node, '_excl', id, it.Name, it.ProductionYear); };
-                row.querySelector('.always').onclick = function () { correct(node, '_incl', id, it.Name, it.ProductionYear); };
+                $('.never', row).onclick = function () { correct(node, '_excl', id, it.Name, it.ProductionYear); };
+                $('.always', row).onclick = function () { correct(node, '_incl', id, it.Name, it.ProductionYear); };
                 out.appendChild(row);
               });
               if (!(res.Items || []).length) { out.textContent = 'Nothing found.'; }
@@ -256,149 +496,310 @@
         });
       }
 
-      function preview(node) {
-        var count = node.querySelector('.previewCount'), list = node.querySelector('.previewList');
-        count.textContent = 'Checking...'; list.innerHTML = '';
-        ApiClient.ajax({
-          type: 'POST', url: ApiClient.getUrl('LibraryOrganizer/Preview'),
-          data: JSON.stringify(readRule(node)), contentType: 'application/json', dataType: 'json'
-        }).then(function (res) {
-          count.textContent = res.Count + ' match' + (res.Count === 1 ? '' : 'es') + (res.Count > res.Items.length ? ' (showing ' + res.Items.length + ')' : '');
-          res.Items.forEach(function (it) {
-            var row = el('<div style="margin:.35em 0"><b>' + esc(it.Name) + (it.Year ? ' (' + it.Year + ')' : '') + '</b> ' +
-              '<span style="opacity:.75">' + esc((it.Why || []).join(', ')) + '</span> ' +
-              '<button type="button" class="notThis" style="margin-left:.6em">Not a match</button></div>');
-            row.querySelector('.notThis').onclick = function () {
-              correct(node, '_excl', it.Id, it.Name, it.Year);
-              row.style.textDecoration = 'line-through'; row.style.opacity = '.5';
-              row.querySelector('.notThis').remove();
-            };
-            list.appendChild(row);
-          });
-        }).catch(function () { count.textContent = 'Preview failed. Check the Jellyfin log.'; });
-      }
-
-      var collectionArt = {};
-      function showThumbs() {
-        page.querySelectorAll('.rule').forEach(function (n) {
-          var name = (n.querySelector('[data-k=Name]').value || '').toLowerCase();
-          var c = collectionArt[name], img = n.querySelector('.artThumb');
-          if (c && c.tag) {
-            img.src = ApiClient.getImageUrl(c.id, { type: 'Primary', maxWidth: 220, tag: c.tag });
-            img.style.display = 'block';
-          } else { img.style.display = 'none'; }
+      // ---------- preview, with story-order arrows ----------
+      function renderPreview(node) {
+        var list = $('.previewList', node), story = readRule(node).ItemOrder === 'Story';
+        list.innerHTML = '';
+        node._rows.forEach(function (it, idx) {
+          var row = el('<div class="lo-row"><span class="t"><b>' + (idx + 1) + '.</b> ' + esc(it.Name) + (it.Year ? ' (' + it.Year + ')' : '') +
+            ' <span class="why">' + esc((it.Why || []).join(', ')) + '</span></span>' +
+            (story ? '<button type="button" class="lo-btn small up" title="Earlier">&#9650;</button><button type="button" class="lo-btn small down" title="Later">&#9660;</button>' : '') +
+            '<button type="button" class="lo-btn small notThis">Not a match</button></div>');
+          if (story) {
+            $('.up', row).onclick = function () { move(node, idx, -1); };
+            $('.down', row).onclick = function () { move(node, idx, 1); };
+          }
+          $('.notThis', row).onclick = function () { correct(node, '_excl', it.Id, it.Name, it.Year); row.style.opacity = '.4'; $('.notThis', row).remove(); };
+          list.appendChild(row);
         });
       }
+      function move(node, idx, d) {
+        var to = idx + d;
+        if (to < 0 || to >= node._rows.length) { return; }
+        var t = node._rows.splice(idx, 1)[0];
+        node._rows.splice(to, 0, t);
+        node._story = node._rows.map(function (it) { return makeEntry(it.Id, it.Name, it.Year); });
+        setDirty(true); renderPreview(node);
+      }
+      function preview(node) {
+        var count = $('.previewCount', node), note = $('.storyNote', node);
+        count.textContent = 'Checking…';
+        return ajax('POST', 'LibraryOrganizer/Preview', readRule(node)).then(function (res) {
+          node._count = res.Count; node._rows = res.Items; refreshRule(node);
+          count.textContent = res.Count + ' title' + (res.Count === 1 ? '' : 's') + (res.Count > res.Items.length ? ' (showing ' + res.Items.length + ')' : '');
+          if (readRule(node).ItemOrder === 'Story') {
+            note.style.display = 'block';
+            note.textContent = (res.HasBuiltInStory ? 'Built-in story order is used for some of these titles (Star Wars, Indiana Jones). ' : 'There is no built-in story order for these titles, so release order is used until you set one. ') +
+              'Use the arrows to set your own, then Save.';
+          } else { note.style.display = 'none'; }
+          renderPreview(node);
+        }).catch(function () { count.textContent = 'Preview failed. Check the Jellyfin log.'; });
+      }
+      function loadCounts() {
+        var chain = Promise.resolve();
+        ruleNodes().filter(function (n) { var r = readRule(n); return r.Enabled !== false && r.Name; }).forEach(function (n) {
+          chain = chain.then(function () {
+            return ajax('POST', 'LibraryOrganizer/Preview', readRule(n)).then(function (res) { n._count = res.Count; refreshRule(n); }).catch(function () { });
+          });
+        });
+      }
+
+      // ---------- artwork thumbs ----------
       function loadThumbs() {
         return ApiClient.getItems(ApiClient.getCurrentUserId(), { IncludeItemTypes: 'BoxSet', Recursive: true, Fields: 'ImageTags' }).then(function (res) {
-          collectionArt = {};
-          (res.Items || []).forEach(function (i) {
-            collectionArt[(i.Name || '').toLowerCase()] = { id: i.Id, tag: (i.ImageTags || {}).Primary };
+          var art = {};
+          (res.Items || []).forEach(function (i) { art[(i.Name || '').toLowerCase()] = { id: i.Id, tag: (i.ImageTags || {}).Primary }; });
+          ruleNodes().forEach(function (n) {
+            var c = art[(readRule(n).Name || '').toLowerCase()], img = $('.lo-art', n);
+            if (c && c.tag) { img.src = ApiClient.getImageUrl(c.id, { type: 'Primary', maxWidth: 120, tag: c.tag }); img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
           });
-          showThumbs();
         }).catch(function () { });
       }
 
-      function renderValues(v) {
-        var body = page.querySelector('#valuesBody'); body.innerHTML = '';
-        [['Genres', v.Genres], ['Tags', v.Tags], ['Countries', v.Countries], ['Franchises', v.Franchises], ['Studios', v.Studios], ['Ratings', v.Ratings]].forEach(function (g) {
-          var d = el('<div style="margin:.5em 0"><b>' + g[0] + ':</b> </div>');
-          (g[1] || []).slice(0, 60).forEach(function (x) {
-            var s = el('<span style="cursor:pointer;margin-right:.8em;text-decoration:underline dotted">' + esc(x.Name) + ' (' + x.Count + ')</span>');
+      // ---------- search / new ----------
+      $('#ruleSearch').addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        ruleNodes().forEach(function (n) { n.style.display = !q || (n.dataset.search || '').indexOf(q) >= 0 ? '' : 'none'; });
+      });
+      function fillNewMenu() {
+        var m = $('#newMenu');
+        m.innerHTML = '<option value="">+ New collection…</option>' + templates.map(function (t, i) { return '<option value="' + i + '">' + esc(t.n) + '</option>'; }).join('');
+        m.onchange = function () {
+          if (m.value === '') { return; }
+          var t = templates[Number(m.value)];
+          var r = Object.assign({ Name: t.n === 'Blank collection' ? '' : t.n }, t.r);
+          var n = renderRule(r); $('#rules').appendChild(n); n.classList.add('open');
+          m.value = ''; setDirty(true); updateEmpty(); n.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          $('[data-k=Name]', n).focus();
+        };
+      }
+
+      // ---------- library values ----------
+      function renderValues() {
+        if (!values) { return; }
+        var q = ($('#valSearch').value || '').toLowerCase();
+        var body = $('#valuesBody'); body.innerHTML = '';
+        [['Genres', values.Genres], ['Tags', values.Tags], ['Countries', values.Countries], ['Franchises', values.Franchises], ['Studios', values.Studios], ['Age ratings', values.Ratings]].forEach(function (g) {
+          var list = (g[1] || []).filter(function (x) { return !q || x.Name.toLowerCase().indexOf(q) >= 0; }).slice(0, 80);
+          if (!list.length) { return; }
+          var d = el('<div style="margin:.7em 0"><b>' + g[0] + '</b><br></div>');
+          list.forEach(function (x) {
+            var s = el('<span class="v">' + esc(x.Name) + ' (' + x.Count + ')</span>');
             s.onclick = function () {
-              if (!lastList) { return; }
-              var cur = lastList.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+              if (!lastList) { say('Click into a filter box on a collection first.', 3000); return; }
+              var cur = csv(lastList.value);
               if (cur.indexOf(x.Name) < 0) { cur.push(x.Name); }
-              lastList.value = cur.join(', ');
+              lastList.value = cur.join(', '); setDirty(true);
+              lastList.dispatchEvent(new Event('input', { bubbles: true }));
+              say('Added ' + x.Name, 2000);
             };
             d.appendChild(s);
           });
           body.appendChild(d);
         });
+        if (!body.children.length) { body.textContent = q ? 'Nothing matches.' : 'Nothing found.'; }
+      }
+      $('#valSearch').addEventListener('input', renderValues);
+
+      function renderCountryChips() {
+        var box = $('#countryChips'); box.innerHTML = '';
+        if (!values) { return; }
+        var chosen = csv($('#autoCountries').value).map(function (c) { return c.toLowerCase(); });
+        (values.Countries || []).slice(0, 24).forEach(function (c) {
+          var on = chosen.indexOf(c.Name.toLowerCase()) >= 0;
+          var chip = el('<span class="lo-chip" style="cursor:pointer' + (on ? ';border-color:var(--lo-accent)' : '') + '">' + (on ? '&#10003; ' : '') + esc(c.Name) + ' (' + c.Count + ')</span>');
+          chip.onclick = function () {
+            var cur = csv($('#autoCountries').value);
+            var at = cur.map(function (x) { return x.toLowerCase(); }).indexOf(c.Name.toLowerCase());
+            if (at >= 0) { cur.splice(at, 1); } else { cur.push(c.Name); }
+            $('#autoCountries').value = cur.join(', '); setDirty(true); renderCountryChips();
+          };
+          box.appendChild(chip);
+        });
+      }
+      $('#autoCountries').addEventListener('input', renderCountryChips);
+
+      // ---------- status / plan ----------
+      function ago(iso) {
+        var s = Math.max(0, (Date.now() - new Date(iso + (/Z|[+-]\d\d:?\d\d$/.test(iso) ? '' : 'Z')).getTime()) / 1000);
+        if (s < 90) { return 'just now'; }
+        if (s < 5400) { return Math.round(s / 60) + ' minutes ago'; }
+        if (s < 129600) { return Math.round(s / 3600) + ' hours ago'; }
+        return Math.round(s / 86400) + ' days ago';
+      }
+      function loadStatus() {
+        return ajax('GET', 'LibraryOrganizer/Status').then(function (s) {
+          if (s.Version) { $('#loVersion').textContent = s.Version; }
+          var b = $('#statusBox');
+          if (!s.Last) { b.textContent = 'No sync has run yet. Press "Save and sync now".'; return s; }
+          var l = s.Last;
+          var txt = '<div><b>' + ago(l.TimeUtc) + '</b> (' + l.Seconds + ' s): ' + l.Created + ' created, ' + l.Updated + ' updated, ' + l.Unchanged + ' unchanged' +
+            (l.Skipped ? ', ' + l.Skipped + ' skipped (too few titles)' : '') + (l.Removed ? ', ' + l.Removed + ' removed' : '') + '. ' + s.Collections + ' collections in total.</div>';
+          if ((l.Lines || []).length) { txt += '<ul style="margin:.5em 0 0 1.2em">' + l.Lines.slice(0, 40).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+          b.innerHTML = txt;
+          return s;
+        }).catch(function () { $('#statusBox').textContent = 'Could not load the status.'; });
+      }
+      $('#btnPlan').onclick = function () {
+        var box = $('#planBox'); box.textContent = 'Working it out…';
+        ajax('GET', 'LibraryOrganizer/Plan').then(function (plan) {
+          box.innerHTML = dirty ? '<div class="lo-note">This uses your saved settings. You have unsaved changes.</div>' : '';
+          if (!plan.length) { box.innerHTML += '<div class="lo-note">Nothing would be made.</div>'; return; }
+          var t = '<table class="lo-table"><tr><th>Collection</th><th>Kind</th><th>Would</th><th>Titles</th><th>Add / remove</th></tr>';
+          plan.forEach(function (p) {
+            t += '<tr><td>' + esc(p.Name) + '</td><td>' + esc(p.Kind) + '</td><td>' + esc(p.Action) + (p.Note ? ' <span class="lo-note">(' + esc(p.Note) + ')</span>' : '') + '</td><td>' + p.Count + '</td><td>+' + p.Add + ' / -' + p.Remove + '</td></tr>';
+          });
+          box.innerHTML += t + '</table>';
+        }).catch(function () { box.textContent = 'Could not build the preview. Check the Jellyfin log.'; });
+      };
+
+      // ---------- save / load ----------
+      function gather() {
+        cfg.RemoveNonMatching = $('#removeNonMatching').checked;
+        cfg.SyncOnLibraryChange = $('#syncOnChange').checked;
+        cfg.SyncOnStartup = $('#syncOnStart').checked;
+        cfg.UsePublicDatabase = $('#usePublic').checked;
+        cfg.ArtworkMode = $('#artMode').value;
+        cfg.ArtworkStyle = $('#artStyle').value;
+        cfg.DeleteRemovedCollections = $('#deleteRemoved').checked;
+        cfg.AutoGenreCollections = $('#autoGenre').checked;
+        cfg.AutoCountries = csv($('#autoCountries').value);
+        cfg.AutoFranchiseCollections = $('#autoFranchise').checked;
+        cfg.GroupAutoCollections = $('#autoGroup').checked;
+        cfg.CollectionOrder = $('#collectionOrder').value;
+        cfg.FranchiseItemOrder = $('#franchiseOrder').value;
+        cfg.AutoItemOrder = $('#autoOrder').value;
+        cfg.FranchiseMinItems = Number($('#franchiseMin').value) || 2;
+        cfg.AutoShowOnHome = $('#autoHome').checked;
+        cfg.AutoMediaType = $('#autoType').value;
+        cfg.AutoMinItems = Number($('#autoMin').value) || 1;
+        cfg.MinItems = Number($('#minItems').value) || 1;
+        cfg.HomeRowLimit = Number($('#homeRowLimit').value) || 16;
+        cfg.Rules = ruleNodes().map(readRule);
+        cfg.PageVersion = PAGE_VERSION;
       }
 
-      function gather() {
-        cfg.RemoveNonMatching = page.querySelector('#removeNonMatching').checked;
-        cfg.SyncOnLibraryChange = page.querySelector('#syncOnChange').checked;
-        cfg.SyncOnStartup = page.querySelector('#syncOnStart').checked;
-        cfg.UsePublicDatabase = page.querySelector('#usePublic').checked;
-        cfg.ArtworkMode = page.querySelector('#artMode').value;
-        cfg.ArtworkStyle = page.querySelector('#artStyle').value;
-        cfg.DeleteRemovedCollections = page.querySelector('#deleteRemoved').checked;
-        cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
-        cfg.AutoCountries = page.querySelector('#autoCountries').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-        cfg.AutoFranchiseCollections = page.querySelector('#autoFranchise').checked;
-        cfg.GroupAutoCollections = page.querySelector('#autoGroup').checked;
-        cfg.FranchiseMinItems = Number(page.querySelector('#franchiseMin').value) || 2;
-        cfg.AutoShowOnHome = page.querySelector('#autoHome').checked;
-        cfg.AutoMediaType = page.querySelector('#autoType').value;
-        cfg.AutoMinItems = Number(page.querySelector('#autoMin').value) || 1;
-        cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
-        cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
-        cfg.Rules = readRules();
-        cfg.PageVersion = 5;
+      function fill(c) {
+        $('#removeNonMatching').checked = c.RemoveNonMatching !== false;
+        $('#syncOnChange').checked = c.SyncOnLibraryChange !== false;
+        $('#syncOnStart').checked = c.SyncOnStartup !== false;
+        $('#usePublic').checked = c.UsePublicDatabase !== false;
+        $('#artMode').value = c.ArtworkMode || 'Replace';
+        $('#artStyle').value = c.ArtworkStyle || 'Mosaic';
+        $('#deleteRemoved').checked = !!c.DeleteRemovedCollections;
+        $('#autoGenre').checked = c.AutoGenreCollections !== false;
+        $('#autoCountries').value = (c.AutoCountries || []).join(', ');
+        $('#autoFranchise').checked = c.AutoFranchiseCollections !== false;
+        $('#autoGroup').checked = c.GroupAutoCollections !== false;
+        $('#collectionOrder').value = c.CollectionOrder || 'Name';
+        fillSelect('#franchiseOrder', FRANCHISE_ORDER, normOrder(c.FranchiseItemOrder));
+        fillSelect('#autoOrder', AUTO_ORDER, c.AutoItemOrder ? normOrder(c.AutoItemOrder) : 'Name');
+        $('#franchiseMin').value = c.FranchiseMinItems || 2;
+        $('#autoHome').checked = !!c.AutoShowOnHome;
+        $('#autoType').value = c.AutoMediaType || 'Movie';
+        $('#autoMin').value = c.AutoMinItems || 5;
+        $('#minItems').value = c.MinItems || 2;
+        $('#homeRowLimit').value = c.HomeRowLimit || 16;
+        var box = $('#rules'); box.innerHTML = '';
+        (c.Rules || []).forEach(function (r) { box.appendChild(renderRule(r)); });
+        updateEmpty(); renderCountryChips();
       }
+
+      function save() {
+        gather();
+        if (cfg.Rules.some(function (r) { return !(r.Name || '').trim(); })) {
+          say('Give every collection a name first.', 4000); $('.lo-tab[data-tab=collections]').click(); return Promise.reject();
+        }
+        Dashboard.showLoadingMsg();
+        return ApiClient.updatePluginConfiguration(pluginId, cfg).then(function (r) {
+          Dashboard.hideLoadingMsg(); setDirty(false); say('Saved.', 3000); return r;
+        }, function (e) { Dashboard.hideLoadingMsg(); say('Could not save. Check the Jellyfin log.'); throw e; });
+      }
+      $('#btnSave').onclick = function () { save().catch(function () { }); };
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's' && page.offsetParent !== null) { e.preventDefault(); save().catch(function () { }); }
+      });
+
+      function lastSyncTime() { return ajax('GET', 'LibraryOrganizer/Status').then(function (s) { return s.Last ? s.Last.TimeUtc : ''; }).catch(function () { return ''; }); }
+      function waitForSync(before, n) {
+        if (n > 60) { say('Still working. Check Dashboard, Scheduled Tasks.', 6000); return; }
+        setTimeout(function () {
+          ajax('GET', 'LibraryOrganizer/Status').then(function (s) {
+            if (s.Last && s.Last.TimeUtc !== before) {
+              say('Done: ' + s.Last.Created + ' created, ' + s.Last.Updated + ' updated, ' + s.Last.Unchanged + ' unchanged.', 10000);
+              loadThumbs(); loadCounts(); loadStatus();
+            } else { waitForSync(before, n + 1); }
+          }).catch(function () { waitForSync(before, n + 1); });
+        }, 1500);
+      }
+      $('#btnSync').onclick = function () {
+        save().then(lastSyncTime).then(function (before) {
+          say('Syncing…');
+          return ApiClient.getScheduledTasks().then(function (tasks) {
+            var t = tasks.filter(function (x) { return x.Key === 'OrganizerSyncCollections'; })[0];
+            if (!t) { say('Saved, but the sync task was not found.'); return; }
+            return ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('ScheduledTasks/Running/' + t.Id) }).then(function () { waitForSync(before, 0); });
+          });
+        }).catch(function () { });
+      };
+
+      // ---------- backup ----------
+      var SERVER_OWNED = ['AutoRules', 'ManagedCollectionNames', 'LegacyCountryCleanupDone', 'DefaultsSeeded', 'SettingsVersion', 'PageVersion'];
+      $('#btnExport').onclick = function () {
+        gather();
+        var out = Object.assign({}, cfg);
+        SERVER_OWNED.forEach(function (k) { delete out[k]; });
+        out._libraryOrganizer = 'settings';
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+        a.download = 'library-organizer-settings.json'; a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      };
+      $('#btnImport').onclick = function () { $('#importFile').click(); };
+      $('#importFile').onchange = function () {
+        var f = this.files[0]; if (!f) { return; }
+        var rd = new FileReader();
+        rd.onload = function () {
+          try {
+            var inc = JSON.parse(rd.result);
+            if (!inc || inc._libraryOrganizer !== 'settings' || !Array.isArray(inc.Rules)) { throw new Error('not ours'); }
+            SERVER_OWNED.forEach(function (k) { delete inc[k]; });
+            delete inc._libraryOrganizer;
+            cfg = Object.assign(cfg, inc);
+            fill(cfg); setDirty(true); loadCounts(); loadThumbs();
+            say('Loaded ' + inc.Rules.length + ' collections. Review them, then press Save.', 10000);
+          } catch (e) { say('That is not a Library Organizer settings file.', 6000); }
+        };
+        rd.readAsText(f); this.value = '';
+      };
+
+      // ---------- general wiring ----------
+      page.addEventListener('input', function (e) {
+        if (!e.target.closest('.rule') && ['ruleSearch', 'valSearch', 'importFile'].indexOf(e.target.id) < 0) { setDirty(true); }
+      });
+      page.addEventListener('change', function (e) {
+        if (!e.target.closest('.rule') && ['newMenu', 'importFile'].indexOf(e.target.id) < 0) { setDirty(true); }
+      });
 
       page.addEventListener('pageshow', function () {
         Dashboard.showLoadingMsg();
-        var ts = page.querySelector('#templateSelect');
-        if (!ts.options.length) { templates.forEach(function (t, i) { ts.appendChild(new Option(t.n, i)); }); }
+        fillNewMenu();
         ApiClient.getPluginConfiguration(pluginId).then(function (c) {
-          cfg = c;
-          page.querySelector('#removeNonMatching').checked = c.RemoveNonMatching;
-          page.querySelector('#syncOnChange').checked = c.SyncOnLibraryChange;
-          page.querySelector('#syncOnStart').checked = c.SyncOnStartup;
-          page.querySelector('#usePublic').checked = c.UsePublicDatabase;
-          page.querySelector('#artMode').value = c.ArtworkMode || 'Replace';
-          page.querySelector('#artStyle').value = c.ArtworkStyle || 'Mosaic';
-          page.querySelector('#deleteRemoved').checked = c.DeleteRemovedCollections;
-          page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
-          page.querySelector('#autoCountries').value = (c.AutoCountries || []).join(', ');
-          page.querySelector('#autoFranchise').checked = c.AutoFranchiseCollections;
-          page.querySelector('#autoGroup').checked = c.GroupAutoCollections !== false;
-          page.querySelector('#franchiseMin').value = c.FranchiseMinItems || 2;
-          page.querySelector('#autoHome').checked = c.AutoShowOnHome;
-          page.querySelector('#autoType').value = c.AutoMediaType || 'Movie';
-          page.querySelector('#autoMin').value = c.AutoMinItems;
-          page.querySelector('#minItems').value = c.MinItems;
-          page.querySelector('#homeRowLimit').value = c.HomeRowLimit;
-          var box = page.querySelector('#rules'); box.innerHTML = '';
-          (c.Rules || []).forEach(function (r) { box.appendChild(renderRule(r)); });
+          cfg = c; fill(c); setDirty(false);
           Dashboard.hideLoadingMsg();
-          loadThumbs();
+          loadThumbs(); loadCounts();
+          try { var t = sessionStorage.getItem('loTab'); if (t) { $('.lo-tab[data-tab=' + t + ']').click(); } } catch (e) { }
         });
-        ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('LibraryOrganizer/Values'), dataType: 'json' })
-          .then(renderValues).catch(function () { page.querySelector('#valuesBody').textContent = 'Could not load library values.'; });
-      });
-
-      page.querySelector('#autoCountries').onfocus = function () { lastList = this; };
-
-      page.querySelector('#addRule').onclick = function () { page.querySelector('#rules').appendChild(renderRule({})); };
-      page.querySelector('#addTemplate').onclick = function () {
-        var t = templates[Number(page.querySelector('#templateSelect').value)];
-        var r = Object.assign({ Name: t.n }, t.r);
-        page.querySelector('#rules').appendChild(renderRule(r));
-      };
-
-      page.querySelector('#syncNow').onclick = function () {
-        var status = page.querySelector('#syncStatus');
-        gather(); status.textContent = 'Saving...';
-        ApiClient.updatePluginConfiguration(pluginId, cfg).then(function () {
-          return ApiClient.getScheduledTasks();
-        }).then(function (tasks) {
-          var t = tasks.filter(function (x) { return x.Key === 'OrganizerSyncCollections'; })[0];
-          if (!t) { status.textContent = 'Saved, but the sync task was not found.'; return; }
-          return ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('ScheduledTasks/Running/' + t.Id) }).then(function () {
-            status.textContent = 'Saved. Sync started; collections update in a few seconds (see Dashboard, Scheduled Tasks).';
-            setTimeout(loadThumbs, 12000);
-          });
-        }).catch(function () { status.textContent = 'Something went wrong. Check the Jellyfin log.'; });
-      };
-
-      page.querySelector('#OrganizerForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        Dashboard.showLoadingMsg(); gather();
-        ApiClient.updatePluginConfiguration(pluginId, cfg).then(Dashboard.processPluginConfigurationUpdateResult);
+        loadStatus();
+        ajax('GET', 'LibraryOrganizer/Values').then(function (v) {
+          values = v; renderValues(); renderCountryChips();
+          var hint = $('#franchiseHint');
+          if (!(v.Franchises || []).length) {
+            hint.style.display = 'block';
+            hint.textContent = 'No franchise data found yet. Franchises come from TMDb: turn on the TMDb provider for your Movies library and refresh its metadata.';
+          } else { hint.style.display = 'none'; }
+        }).catch(function () { $('#valuesBody').textContent = 'Could not load library values.'; });
       });
     })();
   </script>

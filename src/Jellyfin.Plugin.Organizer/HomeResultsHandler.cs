@@ -25,12 +25,14 @@ public class HomeResultsHandler
     private readonly ILibraryManager _library;
     private readonly IUserManager _users;
     private readonly IDtoService _dto;
+    private readonly IUserDataManager _userData;
 
-    public HomeResultsHandler(ILibraryManager library, IUserManager users, IDtoService dto)
+    public HomeResultsHandler(ILibraryManager library, IUserManager users, IDtoService dto, IUserDataManager userData)
     {
         _library = library;
         _users = users;
         _dto = dto;
+        _userData = userData;
     }
 
     public QueryResult<BaseItemDto> GetCollectionResults(HomePayload payload)
@@ -52,8 +54,13 @@ public class HomeResultsHandler
             }).OfType<BoxSet>()
             .FirstOrDefault(b => string.Equals(b.Name, payload.AdditionalData, StringComparison.OrdinalIgnoreCase));
 
-        var children = box?.GetChildren(user, true, null) ?? new List<BaseItem>();
-        var items = Sort(children, rule?.HomeSort, rule?.HomeDescending ?? true)
+        IEnumerable<BaseItem> children = box?.GetChildren(user, true, null) ?? new List<BaseItem>();
+        if (rule?.HideWatched == true)
+        {
+            children = children.Where(c => _userData.GetUserData(user, c)?.Played != true);
+        }
+
+        var items = Sort(children, rule, rule?.HomeSort, rule?.HomeDescending ?? true)
             .Take(Math.Max(1, config.HomeRowLimit))
             .ToList();
 
@@ -67,31 +74,14 @@ public class HomeResultsHandler
         return new QueryResult<BaseItemDto>(_dto.GetBaseItemDtos(items, options, user));
     }
 
-    private static DateTime ReleaseDate(BaseItem i) =>
-        i.PremiereDate ?? (i.ProductionYear is int y && y > 0 && y < 9999 ? new DateTime(y, 1, 1) : DateTime.MinValue);
-
-    public static IEnumerable<BaseItem> Sort(IEnumerable<BaseItem> items, string? sort, bool descending)
+    /// <summary>"Same" (the default) follows the collection's own order; the older fixed choices still work.</summary>
+    public static IEnumerable<BaseItem> Sort(IEnumerable<BaseItem> items, CollectionRule? rule, string? sort, bool descending)
     {
-        switch (sort)
+        if (string.IsNullOrEmpty(sort) || sort == "Same")
         {
-            case "Random":
-                return items.OrderBy(_ => Random.Shared.Next());
-            case "SortName":
-                return descending
-                    ? items.OrderByDescending(i => i.SortName, StringComparer.OrdinalIgnoreCase)
-                    : items.OrderBy(i => i.SortName, StringComparer.OrdinalIgnoreCase);
-            case "CommunityRating":
-                return descending
-                    ? items.OrderByDescending(i => i.CommunityRating ?? 0)
-                    : items.OrderBy(i => i.CommunityRating ?? 0);
-            case "DateAdded":
-                return descending
-                    ? items.OrderByDescending(i => i.DateCreated)
-                    : items.OrderBy(i => i.DateCreated);
-            default:
-                return descending
-                    ? items.OrderByDescending(i => ReleaseDate(i))
-                    : items.OrderBy(i => ReleaseDate(i));
+            return ItemSorter.Order(items, rule?.ItemOrder, rule?.ItemDescending ?? false, rule?.StoryOrder);
         }
+
+        return ItemSorter.Order(items, sort, descending, rule?.StoryOrder);
     }
 }

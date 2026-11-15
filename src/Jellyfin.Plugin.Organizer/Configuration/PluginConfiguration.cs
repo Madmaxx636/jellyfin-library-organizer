@@ -51,8 +51,23 @@ public class CollectionRule
     public int? YearTo { get; set; }
     public double? MinCommunityRating { get; set; }
 
-    /// <summary>Order of items inside the collection page: PremiereDate or SortName.</summary>
-    public string ItemOrder { get; set; } = "PremiereDate";
+    /// <summary>
+    /// Order of items inside the collection: Release, Year, Name, Rating, Runtime, DateAdded or Story.
+    /// The older values PremiereDate and SortName still work.
+    /// </summary>
+    public string ItemOrder { get; set; } = "Release";
+
+    /// <summary>Reverse the order (newest, highest, Z-A first).</summary>
+    public bool ItemDescending { get; set; }
+
+    /// <summary>
+    /// Your own story order for "Story" ordering, as "id|Name (year)", first to last. Titles not listed follow
+    /// the built-in story order (Star Wars, Indiana Jones) and then release order.
+    /// </summary>
+    public string[] StoryOrder { get; set; } = Array.Empty<string>();
+
+    /// <summary>On the home row, hide titles the viewing user has already watched.</summary>
+    public bool HideWatched { get; set; }
 
     /// <summary>Leave this collection's artwork alone (use your own images).</summary>
     public bool KeepOwnArtwork { get; set; }
@@ -66,8 +81,8 @@ public class CollectionRule
     /// <summary>Show this collection as a row on the home screen (needs Home Screen Sections).</summary>
     public bool ShowOnHome { get; set; } = true;
 
-    /// <summary>Home row sort: PremiereDate, SortName, CommunityRating, DateAdded or Random.</summary>
-    public string HomeSort { get; set; } = "PremiereDate";
+    /// <summary>Home row sort: Same (as the collection), Release, Year, Name, Rating, Runtime, DateAdded or Random.</summary>
+    public string HomeSort { get; set; } = "Same";
 
     public bool HomeDescending { get; set; } = true;
 
@@ -131,6 +146,15 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Sort automatic collections as franchises, then countries, then genres, instead of one A-Z list.</summary>
     public bool GroupAutoCollections { get; set; } = true;
 
+    /// <summary>Which collection comes first within a group: Name, Newest, Oldest, Rating or Size.</summary>
+    public string CollectionOrder { get; set; } = "Name";
+
+    /// <summary>Item order inside automatic franchise collections: Release (default), Story, Year, Name or Rating.</summary>
+    public string FranchiseItemOrder { get; set; } = "Release";
+
+    /// <summary>Item order inside automatic country and genre collections.</summary>
+    public string AutoItemOrder { get; set; } = "Name";
+
     /// <summary>A franchise needs at least this many movies in your library.</summary>
     public int FranchiseMinItems { get; set; } = 2;
 
@@ -165,7 +189,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
     /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
     /// </summary>
-    public const int CurrentPageVersion = 5;
+    public const int CurrentPageVersion = 6;
 
     public int PageVersion { get; set; }
 
@@ -175,6 +199,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public static void KeepNewerFields(PluginConfiguration incoming, PluginConfiguration existing)
     {
+        // Owned by the sync, never by the page: a page loaded before a sync would otherwise write stale copies back.
+        incoming.AutoRules = existing.AutoRules;
+        incoming.ManagedCollectionNames = existing.ManagedCollectionNames;
+        incoming.LegacyCountryCleanupDone = existing.LegacyCountryCleanupDone;
+
         if (incoming.PageVersion >= CurrentPageVersion)
         {
             return;
@@ -235,6 +264,26 @@ public class PluginConfiguration : BasePluginConfiguration
         if (incoming.PageVersion < 5)
         {
             incoming.GroupAutoCollections = existing.GroupAutoCollections;
+        }
+
+        if (incoming.PageVersion < 6)
+        {
+            incoming.CollectionOrder = existing.CollectionOrder;
+            incoming.FranchiseItemOrder = existing.FranchiseItemOrder;
+            incoming.AutoItemOrder = existing.AutoItemOrder;
+            foreach (var rule in incoming.Rules)
+            {
+                var old = existing.Rules.FirstOrDefault(r => string.Equals(r.Name, rule.Name, StringComparison.OrdinalIgnoreCase));
+                if (old is not null)
+                {
+                    rule.ItemOrder = old.ItemOrder;
+                    rule.ItemDescending = old.ItemDescending;
+                    rule.StoryOrder = old.StoryOrder;
+                    rule.HideWatched = old.HideWatched;
+                    rule.HomeSort = old.HomeSort;
+                    rule.HomeDescending = old.HomeDescending;
+                }
+            }
         }
 
         incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);

@@ -58,35 +58,20 @@ public class SyncCollectionsTask : IScheduledTask
         WikidataLists.Enabled = config.UsePublicDatabase;
         await WikidataLists.EnsureAsync(manual.SelectMany(r => r.PublicGenres), _log, ct).ConfigureAwait(false);
 
+        var started = DateTime.UtcNow;
+        var report = new SyncReport { TimeUtc = started };
         var items = LibraryQuery.MoviesAndSeries(_library);
-        var taken = new HashSet<string>(config.Rules.Select(r => r.Name), StringComparer.OrdinalIgnoreCase);
         var existing = _library.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = new[] { BaseItemKind.BoxSet },
             Recursive = true
         }).OfType<BoxSet>().ToList();
 
-        var auto = LibraryQuery.BuildAutoRules(config, items, taken);
+        var auto = LibraryQuery.SelectAutoRules(config, items, existing.Select(b => b.Name).ToList(), manual,
+            note => _log.LogInformation("{Note}", note));
 
-        // An automatic collection with exactly the same items as one of your rules would just be a duplicate.
-        var manualSets = manual.Select(r => LibraryQuery.Match(r, items).Select(i => i.Id).ToHashSet()).ToList();
-        auto = auto.Where(a =>
-        {
-            // Jellyfin's own "automatically add to collection" option may already have made this franchise.
-            var madeByJellyfin = a.Franchises.Length > 0
-                && existing.Any(b => a.Franchises.Any(f => string.Equals(b.Name, f, StringComparison.OrdinalIgnoreCase)));
-            if (madeByJellyfin)
-            {
-                _log.LogInformation("Franchise '{Name}' already has a Jellyfin-made collection; skipping", a.Name);
-                return false;
-            }
-
-            var ids = LibraryQuery.Match(a, items).Select(i => i.Id).ToHashSet();
-            return !manualSets.Any(m => m.SetEquals(ids));
-        }).ToList();
-
-        var all = manual.Select(r => (Rule: r, Min: config.MinItems))
-            .Concat(auto.Select(r => (Rule: r, Min: r.Franchises.Length > 0 ? Math.Max(2, config.FranchiseMinItems) : r.Countries.Length > 0 ? config.MinItems : config.AutoMinItems)))
+        var all = manual.Select(r => (Rule: r, Min: LibraryQuery.MinimumFor(r, config, false)))
+            .Concat(auto.Select(r => (Rule: r, Min: LibraryQuery.MinimumFor(r, config, true))))
             .ToList();
 
         var managed = new List<string>();
@@ -95,9 +80,21 @@ public class SyncCollectionsTask : IScheduledTask
             ct.ThrowIfCancellationRequested();
             try
             {
-                if (await ApplyRule(all[i].Rule, all[i].Min, items, existing, config, ct).ConfigureAwait(false))
+                var result = await ApplyRule(all[i].Rule, all[i].Min, items, existing, config, ct).ConfigureAwait(false);
+                if (result.Exists)
                 {
                     managed.Add(all[i].Rule.Name);
+                }
+
+                switch (result.Action)
+                {
+                    case "created": report.Created++; report.Lines.Add($"Created {all[i].Rule.Name} ({result.Count} titles)"); break;
+                    case "updated":
+                        report.Updated++;
+                        report.Lines.Add($"Updated {all[i].Rule.Name}: {result.Added} added, {result.Removed} removed");
+                        break;
+                    case "skipped": report.Skipped++; break;
+                    default: report.Unchanged++; break;
                 }
             }
             catch (Exception ex)
@@ -117,6 +114,8 @@ public class SyncCollectionsTask : IScheduledTask
                 if (box is null) continue;
                 _library.DeleteItem(box, new DeleteOptions { DeleteFileLocation = false });
                 _log.LogInformation("Deleted collection '{Name}' because its rule is gone", name);
+                report.Removed++;
+                report.Lines.Add($"Deleted {name} (its rule is gone)");
             }
         }
 
@@ -134,6 +133,8 @@ public class SyncCollectionsTask : IScheduledTask
                 {
                     _library.DeleteItem(box, new DeleteOptions { DeleteFileLocation = false });
                     _log.LogInformation("Removed old per-country collection '{Name}'; only countries you list in settings get one now", name);
+                    report.Removed++;
+                    report.Lines.Add($"Removed old {name}");
                 }
 
                 deletedLegacy.Add(name);
@@ -151,11 +152,14 @@ public class SyncCollectionsTask : IScheduledTask
         plugin?.SaveConfiguration();
 
         HomeSections.Register(config, _log);
+        report.Seconds = Math.Round((DateTime.UtcNow - started).TotalSeconds, 1);
+        report.Save();
         progress.Report(100);
     }
 
-    /// <summary>Returns true when the collection exists after this call.</summary>
-    private async Task<bool> ApplyRule(
+    private readonly record struct RuleResult(bool Exists, string Action, int Count, int Added, int Removed);
+
+    private async Task<RuleResult> ApplyRule(
         CollectionRule rule,
         int minItems,
         IReadOnlyList<BaseItem> allItems,
@@ -170,8 +174,11 @@ public class SyncCollectionsTask : IScheduledTask
         if (matched.Count < Math.Max(1, minItems))
         {
             _log.LogInformation("Rule '{Rule}': {Count} matches, below minimum {Min}, skipped", rule.Name, matched.Count, minItems);
-            return box is not null;
+            return new RuleResult(box is not null, "skipped", matched.Count, 0, 0);
         }
+
+        var action = "unchanged";
+        int added = 0, removed = 0;
 
         if (box is null)
         {
@@ -182,6 +189,7 @@ public class SyncCollectionsTask : IScheduledTask
                 IsLocked = false
             }).ConfigureAwait(false);
             existing.Add(box);
+            action = "created";
             _log.LogInformation("Created collection '{Rule}' with {Count} items", rule.Name, matched.Count);
         }
         else
@@ -207,18 +215,39 @@ public class SyncCollectionsTask : IScheduledTask
             {
                 await _collections.RemoveFromCollectionAsync(box.Id, toRemove).ConfigureAwait(false);
             }
+
+            added = toAdd.Count;
+            removed = toRemove.Count;
+            if (added + removed > 0)
+            {
+                action = "updated";
+            }
         }
 
         // Adding or removing items changes the stored collection, so work on a fresh copy. Saving the older
         // in-memory one would write the previous member list back and undo the change.
         box = _library.GetItemById(box.Id) as BoxSet ?? box;
 
-        box.DisplayOrder = rule.ItemOrder == "SortName" ? "SortName" : "PremiereDate";
-
-        // Jellyfin sorts collections by SortName, so a numeric prefix gives a stable, user-set order.
-        box.ForcedSortName = rule.Position > 0
-            ? $"{rule.Position:D3} {rule.Name}"
-            : string.Empty;
+        // Where the collection sits among the others, and the order of the titles inside it.
+        box.ForcedSortName = ItemSorter.CollectionSortName(rule, matched, config.CollectionOrder);
+        var native = ItemSorter.NativeDisplayOrder(rule.ItemOrder, rule.ItemDescending);
+        if (native is not null)
+        {
+            box.DisplayOrder = native;
+        }
+        else
+        {
+            // Jellyfin can only sort a collection by a few keys, ascending. For the rest (story order, rating,
+            // newest first...) it keeps the order the collection was stored in, so store it in the order we want.
+            box.DisplayOrder = "Default";
+            var ordered = ItemSorter.Order(matched, rule.ItemOrder, rule.ItemDescending, rule.StoryOrder);
+            var inBox = box.GetLinkedChildren().GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First());
+            var arranged = ordered.Where(o => inBox.ContainsKey(o.Id)).Select(o => inBox[o.Id]).ToList();
+            var arrangedIds = arranged.Select(c => c.Id).ToHashSet();
+            // Titles that are in the collection but no longer match (when "take titles out" is off) stay, at the end.
+            arranged.AddRange(inBox.Values.Where(c => !arrangedIds.Contains(c.Id)));
+            box.LinkedChildren = arranged.Select(LinkedChild.Create).ToArray();
+        }
 
         await box.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, ct).ConfigureAwait(false);
 
@@ -233,6 +262,6 @@ public class SyncCollectionsTask : IScheduledTask
             _log.LogWarning(ex, "Could not make artwork for '{Rule}'", rule.Name);
         }
 
-        return true;
+        return new RuleResult(true, action, matched.Count, added, removed);
     }
 }
