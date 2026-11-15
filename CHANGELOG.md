@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 - Artwork for every collection
+
+- **Posters, thumbs and backdrops for all your collections**, made automatically. The default is a mosaic of the posters of the titles inside, with the collection name, a title count and an accent colour picked from the name. The thumb and backdrop (used by home screen rows and the collection page) use the titles' backdrops. Collections with no artwork to draw from get a plain colour title card.
+- Drawn on your server with the image library Jellyfin already ships; nothing is downloaded or sent anywhere.
+- Redrawn only when a collection's contents or look change, never on every sync.
+- Settings: "Make and keep up to date" (default), "Only where there is none", or "Off"; style "Mosaic of posters" or "Colour title card".
+- Per collection: "Keep my own artwork for this collection" (never touched), and an optional accent colour (#RRGGBB).
+- Each rule on the settings page shows the collection's current poster.
+- Note: in the default mode this replaces the collage Jellyfin makes for a collection by itself. Use "Only where there is none", or "Keep my own artwork" on a collection, if you want to keep an image.
+- The settings page moved to a new address again (page version 3) so a cached copy of the old page can't be reused; the server keeps the newer artwork settings if an old page saves.
+
 ## 0.5.1 - Settings that stick
 
 Fixed

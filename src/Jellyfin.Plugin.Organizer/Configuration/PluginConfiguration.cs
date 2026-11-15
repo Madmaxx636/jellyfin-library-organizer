@@ -54,6 +54,12 @@ public class CollectionRule
     /// <summary>Order of items inside the collection page: PremiereDate or SortName.</summary>
     public string ItemOrder { get; set; } = "PremiereDate";
 
+    /// <summary>Leave this collection's artwork alone (use your own images).</summary>
+    public bool KeepOwnArtwork { get; set; }
+
+    /// <summary>Optional #RRGGBB accent colour for the generated artwork; empty picks one from the name.</summary>
+    public string AccentColor { get; set; } = string.Empty;
+
     /// <summary>Show this collection as a row on the home screen (needs Home Screen Sections).</summary>
     public bool ShowOnHome { get; set; } = true;
 
@@ -127,6 +133,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Look up curated lists on Wikidata (only a genre id leaves the server). Turn off for fully offline use.</summary>
     public bool UsePublicDatabase { get; set; } = true;
 
+    /// <summary>Artwork for the collections: Replace (default), FillMissing or Off.</summary>
+    public string ArtworkMode { get; set; } = "Replace";
+
+    /// <summary>Mosaic (posters of the titles inside) or Title (colour card with just the name).</summary>
+    public string ArtworkStyle { get; set; } = "Mosaic";
+
     /// <summary>Run a sync about a minute after the server starts.</summary>
     public bool SyncOnStartup { get; set; } = true;
 
@@ -139,7 +151,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
     /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
     /// </summary>
-    public const int CurrentPageVersion = 2;
+    public const int CurrentPageVersion = 3;
 
     public int PageVersion { get; set; }
 
@@ -165,13 +177,32 @@ public class PluginConfiguration : BasePluginConfiguration
                 continue;
             }
 
-            rule.MinFieldMatches = old.MinFieldMatches;
-            rule.PublicGenres = old.PublicGenres;
-            rule.ExcludeItems = old.ExcludeItems;
-            rule.IncludeItems = old.IncludeItems;
+            if (incoming.PageVersion < 2)
+            {
+                rule.MinFieldMatches = old.MinFieldMatches;
+                rule.PublicGenres = old.PublicGenres;
+                rule.ExcludeItems = old.ExcludeItems;
+                rule.IncludeItems = old.IncludeItems;
+            }
+
+            if (incoming.PageVersion < 3)
+            {
+                rule.KeepOwnArtwork = old.KeepOwnArtwork;
+                rule.AccentColor = old.AccentColor;
+            }
         }
 
-        incoming.UsePublicDatabase = existing.UsePublicDatabase;
+        if (incoming.PageVersion < 2)
+        {
+            incoming.UsePublicDatabase = existing.UsePublicDatabase;
+        }
+
+        if (incoming.PageVersion < 3)
+        {
+            incoming.ArtworkMode = existing.ArtworkMode;
+            incoming.ArtworkStyle = existing.ArtworkStyle;
+        }
+
         incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);
         incoming.PageVersion = CurrentPageVersion;
     }

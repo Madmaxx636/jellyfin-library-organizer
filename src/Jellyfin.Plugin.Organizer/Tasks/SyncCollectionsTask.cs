@@ -9,6 +9,7 @@ using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -19,15 +20,18 @@ public class SyncCollectionsTask : IScheduledTask
     private readonly ILibraryManager _library;
     private readonly ICollectionManager _collections;
     private readonly ILogger<SyncCollectionsTask> _log;
+    private readonly ArtworkService _artwork;
 
     public SyncCollectionsTask(
         ILibraryManager library,
         ICollectionManager collections,
+        IProviderManager providers,
         ILogger<SyncCollectionsTask> log)
     {
         _library = library;
         _collections = collections;
         _log = log;
+        _artwork = new ArtworkService(providers, log);
     }
 
     public string Name => "Sync organizer collections";
@@ -186,6 +190,18 @@ public class SyncCollectionsTask : IScheduledTask
             : string.Empty;
 
         await box.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, ct).ConfigureAwait(false);
+
+        try
+        {
+            box = _library.GetItemById(box.Id) as BoxSet ?? box;
+            await _artwork.Apply(box, rule, matched, config, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Artwork is a nicety; never let it stop the collection itself.
+            _log.LogWarning(ex, "Could not make artwork for '{Rule}'", rule.Name);
+        }
+
         return true;
     }
 }

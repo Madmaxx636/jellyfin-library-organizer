@@ -7,6 +7,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <!-- Default: no system libraries needed, so tests run anywhere. -p:ArtFonts=true uses the fontconfig build to draw real text for sample images. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.116.1" Condition="'$(ArtFonts)' != 'true'" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" Condition="'$(ArtFonts)' == 'true'" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <ProjectReference Include="..\..\src\Jellyfin.Plugin.Organizer\Jellyfin.Plugin.Organizer.csproj" />
   </ItemGroup>

@@ -8,6 +8,7 @@ Tested on Jellyfin 10.11.
 
 - **Rules to collections.** A rule matches movies or series by genre, tag, production country, studio, official rating, title keywords, year range or minimum rating. Example rules ship for "Filipino Movies" (country: Philippines) and "Christmas Movies" (Holiday genre, christmas tag, or christmas/santa in the title).
 - **Ordering.** Each rule picks how items are sorted inside its collection (premiere date or name) and has a Position number that sets where the collection sits among your other collections.
+- **Artwork.** Each collection gets a poster, thumb and backdrop drawn from the artwork of the titles inside it, with its name on top (see Artwork below).
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
 - **Runs on its own.** A sync runs about a minute after the server starts, about two minutes after movies or shows are added or their metadata changes, and daily at 4 AM. New matches go in and items that no longer match come out. Nothing to click.
 - **Automatic genre and country collections** are on by default, so a fresh install organizes the library without any rules. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
@@ -61,6 +62,15 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 2. Unzip into `plugins/LibraryOrganizer_<version>/` inside your Jellyfin data folder.
 3. Restart Jellyfin, then open Dashboard, Plugins, Library Organizer to edit your rules.
 4. That's it. Collections build themselves about a minute after the restart. To force it, use "Save, then sync collections now" on the settings page.
+
+## Artwork
+
+For every collection the plugin makes a poster (600x900), a thumb and a backdrop (1280x720). The default style is a mosaic of the posters of the best-rated titles in the collection, with the collection's name, how many titles it holds, and an accent colour picked from the name (or set your own as #RRGGBB on the rule). The "Colour title card" style draws just the name on a colour gradient, and is also used when a collection has no artwork to draw from.
+
+- **Modes.** "Make and keep up to date" redraws a collection's images whenever its contents or look change. "Only where there is none" fills gaps and never replaces an image that is already there. "Off" does nothing.
+- **Keep my own artwork.** A per-collection checkbox. The plugin never touches that collection's images, so you can upload your own.
+- Drawn on the server with the image library Jellyfin ships, using fonts already installed on the server. Nothing is downloaded or sent anywhere. Images are only redrawn when something changed.
+- In the default mode this replaces the collage Jellyfin makes for a collection by itself.
 
 ## Privacy
 
