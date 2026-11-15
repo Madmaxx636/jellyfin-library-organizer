@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.7.0.0",
+        "changelog": "Franchise collections (Star Wars, Indiana Jones). Country collections only for countries you list. One-time cleanup of the old per-country collections.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.7.0/LibraryOrganizer_0.7.0.0.zip",
+        "checksum": "1f757600415ac3375951ea6856293d17",
+        "timestamp": "2026-11-15T05:57:09Z"
+      },
+      {
         "version": "0.6.0.0",
         "changelog": "Generated poster, thumb and backdrop artwork for every collection, with modes, styles and per-collection overrides.",
         "targetAbi": "10.11.0.0",
