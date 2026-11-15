@@ -133,11 +133,52 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Bumped when a new version needs to change older saved settings once.</summary>
     public int SettingsVersion { get; set; }
 
-    public const int CurrentSettingsVersion = 4;
+    public const int CurrentSettingsVersion = 5;
+
+    /// <summary>
+    /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
+    /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
+    /// </summary>
+    public const int CurrentPageVersion = 2;
+
+    public int PageVersion { get; set; }
+
+    /// <summary>
+    /// Called with a save from an out-of-date (cached) settings page: keep the newer per-rule settings and
+    /// options that page doesn't know about, instead of resetting them to defaults.
+    /// </summary>
+    public static void KeepNewerFields(PluginConfiguration incoming, PluginConfiguration existing)
+    {
+        if (incoming.PageVersion >= CurrentPageVersion)
+        {
+            return;
+        }
+
+        var byName = existing.Rules
+            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rule in incoming.Rules)
+        {
+            if (!byName.TryGetValue(rule.Name, out var old))
+            {
+                continue;
+            }
+
+            rule.MinFieldMatches = old.MinFieldMatches;
+            rule.PublicGenres = old.PublicGenres;
+            rule.ExcludeItems = old.ExcludeItems;
+            rule.IncludeItems = old.IncludeItems;
+        }
+
+        incoming.UsePublicDatabase = existing.UsePublicDatabase;
+        incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);
+        incoming.PageVersion = CurrentPageVersion;
+    }
 
     /// <summary>
     /// Version 2 turned the automatic genre and country collections and both auto-syncs on by default.
-    /// Versions 3 and 4 tightened the stock Christmas rule: a single stray "christmas" tag put hundreds of
+    /// Versions 3 to 5 tightened the stock Christmas rule: a single stray "christmas" tag put hundreds of
     /// unrelated titles in it, so it now needs two of genre, tag and title word, or a place on the
     /// Wikidata "Christmas film" list.
     /// </summary>
@@ -156,17 +197,24 @@ public class PluginConfiguration : BasePluginConfiguration
             config.SyncOnStartup = true;
         }
 
+        // The stock Christmas rule lets one stray tag in. Tighten it unless it was clearly rebuilt by hand
+        // ("All" matching) or already strict.
         foreach (var rule in config.Rules)
         {
-            var stock = string.Equals(rule.Name, "Christmas Movies", StringComparison.OrdinalIgnoreCase)
-                        && rule.MinFieldMatches <= 2
-                        && rule.Match != "All"
-                        && rule.ExcludeItems.Length == 0
-                        && rule.PublicGenres.Length == 0
-                        && rule.Tags.Any(t => string.Equals(t, "christmas", StringComparison.OrdinalIgnoreCase));
-            if (stock)
+            var christmas = string.Equals(rule.Name, "Christmas Movies", StringComparison.OrdinalIgnoreCase)
+                            && !string.Equals(rule.Match, "All", StringComparison.OrdinalIgnoreCase);
+            if (!christmas)
+            {
+                continue;
+            }
+
+            if (rule.MinFieldMatches < 2)
             {
                 rule.MinFieldMatches = 2;
+            }
+
+            if (rule.PublicGenres.Length == 0)
+            {
                 rule.PublicGenres = new[] { ChristmasFilm };
             }
         }

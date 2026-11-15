@@ -307,3 +307,53 @@ public class PublicDatabaseTests
         Assert.Contains(PluginConfiguration.ChristmasFilm, r.PublicGenres);
     }
 }
+
+public class LooseChristmasMigrationTests
+{
+    [Fact]
+    public void ChristmasRuleWithoutTheStockTagsIsStillTightened()
+    {
+        var rule = new CollectionRule { Name = "Christmas Movies", Tags = new[] { "holiday", "xmas" }, MinFieldMatches = 1 };
+        var cfg = new PluginConfiguration { SettingsVersion = 4, Rules = new() { rule } };
+        Assert.True(PluginConfiguration.Migrate(cfg));
+        Assert.Equal(2, rule.MinFieldMatches);
+        Assert.Contains(PluginConfiguration.ChristmasFilm, rule.PublicGenres);
+    }
+
+    [Fact]
+    public void AlreadyStrictRuleKeepsItsOwnPublicLists()
+    {
+        var rule = new CollectionRule { Name = "Christmas Movies", MinFieldMatches = 3, PublicGenres = new[] { "Q1|Mine" } };
+        var cfg = new PluginConfiguration { SettingsVersion = 4, Rules = new() { rule } };
+        PluginConfiguration.Migrate(cfg);
+        Assert.Equal(3, rule.MinFieldMatches);
+        Assert.Equal(new[] { "Q1|Mine" }, rule.PublicGenres);
+    }
+}
+
+public class StalePageTests
+{
+    [Fact]
+    public void SaveFromAnOldPageDoesNotResetNewerSettings()
+    {
+        var existing = new PluginConfiguration
+        {
+            Rules = new() { new CollectionRule { Name = "Christmas Movies", MinFieldMatches = 2, PublicGenres = new[] { "Q1|X" }, ExcludeItems = new[] { "a|b" } } }
+        };
+        // What an old page sends: the rule without any of the newer fields.
+        var incoming = new PluginConfiguration { Rules = new() { new CollectionRule { Name = "Christmas Movies" } }, PageVersion = 0 };
+        PluginConfiguration.KeepNewerFields(incoming, existing);
+        Assert.Equal(2, incoming.Rules[0].MinFieldMatches);
+        Assert.Equal(new[] { "Q1|X" }, incoming.Rules[0].PublicGenres);
+        Assert.Equal(new[] { "a|b" }, incoming.Rules[0].ExcludeItems);
+    }
+
+    [Fact]
+    public void SaveFromTheCurrentPageIsTakenAsIs()
+    {
+        var existing = new PluginConfiguration { Rules = new() { new CollectionRule { Name = "R", MinFieldMatches = 3 } } };
+        var incoming = new PluginConfiguration { Rules = new() { new CollectionRule { Name = "R", MinFieldMatches = 1 } }, PageVersion = PluginConfiguration.CurrentPageVersion };
+        PluginConfiguration.KeepNewerFields(incoming, existing);
+        Assert.Equal(1, incoming.Rules[0].MinFieldMatches);
+    }
+}

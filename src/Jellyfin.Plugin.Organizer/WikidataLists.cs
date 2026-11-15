@@ -48,7 +48,7 @@ public static class WikidataLists
     private static HttpClient CreateClient()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("LibraryOrganizerJellyfinPlugin/0.5 (open-source Jellyfin plugin)");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("LibraryOrganizerJellyfinPlugin/0.5.1 (open-source Jellyfin plugin)");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/sparql-results+json, application/json");
         return client;
     }

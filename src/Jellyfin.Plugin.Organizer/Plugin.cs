@@ -50,6 +50,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
     public static Plugin? Instance { get; private set; }
 
+    public override void UpdateConfiguration(BasePluginConfiguration configuration)
+    {
+        if (configuration is PluginConfiguration incoming)
+        {
+            PluginConfiguration.KeepNewerFields(incoming, Configuration);
+        }
+
+        base.UpdateConfiguration(configuration);
+    }
+
     public override string Name => "Library Organizer";
 
     public override Guid Id => Guid.Parse("6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90");
@@ -61,7 +71,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         yield return new PluginPageInfo
         {
-            Name = Name,
+            // The address carries the page version so an old cached copy of the page is never reused.
+            Name = $"LibraryOrganizer-p{PluginConfiguration.CurrentPageVersion}",
             DisplayName = Name,
             EnableInMainMenu = true,
             MenuSection = "server",

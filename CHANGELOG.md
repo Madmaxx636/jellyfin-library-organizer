@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.1 - Settings that stick
+
+Fixed
+- **The Christmas fix could be undone by an old cached settings page.** Browsers can keep showing an old copy of the settings page after an update. A save from that old page doesn't know the newer fields, so it silently reset "Fields that must match" and the public list on every rule. Now the settings page has a new address, so the old copy is never reused, and the server ignores the missing fields when a save comes from an old page.
+- The upgrade now tightens the Christmas Movies rule even if you had changed its tags or settings (rules set to "All" matching are left alone).
+
+New
+- A warning on any rule where a single match is enough ("Loose rule: one stray tag is enough") with a one-click "Require 2 fields" button.
+- The settings page title shows its version ("settings page 0.5.1, version 2"), so you can tell you are not looking at an old cached copy.
+
 ## 0.5.0 - Fixing false positives
 
 Fixed

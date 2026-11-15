@@ -2,10 +2,10 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Library Organizer</title></head>
 <body>
-<div id="OrganizerPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div id="OrganizerPageP2" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
   <div data-role="content">
     <div class="content-primary">
-      <h1>Library Organizer</h1>
+      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 0.5.1, version 2</small></h1>
       <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries, studios and ratings match exactly (ignoring case); title keywords match anywhere in the title; languages can be names (Korean) or codes (kor).</p>
 
       <details id="values" style="margin:1em 0">
@@ -48,7 +48,7 @@
   <script type="text/javascript">
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
-      var page = document.querySelector('#OrganizerPage');
+      var page = document.querySelector('#OrganizerPageP2');
       var cfg = null, lastList = null;
 
       var listFields = [
@@ -91,7 +91,9 @@
         var h = '<fieldset class="rule" style="margin:1.5em 0;padding:1em;border:1px solid #555;">' +
           '<label><input type="checkbox" data-k="Enabled"' + (r.Enabled !== false ? ' checked' : '') + '> Enabled</label>' +
           '<button type="button" class="del" style="float:right">Delete rule</button><br><br>' +
-          '<label>Collection name<br><input type="text" data-k="Name" value="' + esc(r.Name) + '" style="width:100%"></label><br><br>' +
+          '<label>Collection name<br><input type="text" data-k="Name" value="' + esc(r.Name) + '" style="width:100%"></label>' +
+          '<div class="looseWarn" style="display:none;margin:.6em 0;padding:.6em;border:1px solid #c80;color:#fb3">Loose rule: any single match puts a title in, so one stray tag or word is enough. ' +
+          '<button type="button" class="makeStrict">Require 2 fields</button></div><br>' +
           '<label>Media type ' + sel('MediaType', ['Movie', 'Series', 'Both'], r.MediaType || 'Movie') + '</label> ' +
           '<label>Combine fields ' + sel('Match', ['Any', 'All'], r.Match || 'Any') + '</label> ' +
           '<label title="Stricter: an item needs this many of your filled-in fields to match. Two fixes most stray-tag false positives.">Fields that must match <select data-num="MinFieldMatches">' +
@@ -122,11 +124,15 @@
           '</fieldset>';
         var node = el(h);
         node._pub = (r.PublicGenres || []).slice();
+        node.addEventListener('input', function () { updateWarn(node); });
+        node.addEventListener('change', function () { updateWarn(node); });
+        node.querySelector('.makeStrict').onclick = function () { node.querySelector('[data-num=MinFieldMatches]').value = '2'; updateWarn(node); };
         node._excl = (r.ExcludeItems || []).slice();
         node._incl = (r.IncludeItems || []).slice();
         renderLists(node);
         wireSearch(node);
         wirePublic(node);
+        updateWarn(node);
         node.querySelector('.del').onclick = function () { node.remove(); };
         node.querySelectorAll('[data-list]').forEach(function (i) { i.onfocus = function () { lastList = i; }; });
         node.querySelector('.preview').onclick = function () { preview(node); };
@@ -148,6 +154,13 @@
         return r;
       }
       function readRules() { return Array.prototype.map.call(page.querySelectorAll('.rule'), readRule); }
+
+      function updateWarn(node) {
+        var r = readRule(node);
+        var filled = ['Genres', 'Tags', 'Countries', 'Studios', 'OfficialRatings', 'TitleKeywords', 'Languages'].filter(function (k) { return (r[k] || []).length; }).length;
+        var loose = r.Match !== 'All' && (r.MinFieldMatches || 1) < 2 && filled >= 2 && !(r.PublicGenres || []).length;
+        node.querySelector('.looseWarn').style.display = loose ? 'block' : 'none';
+      }
 
       function entryId(e) { return String(e).split('|')[0]; }
       function entryLabel(e) { var p = String(e).split('|'); return p.slice(1).join('|') || p[0]; }
@@ -284,6 +297,7 @@
         cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
         cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
         cfg.Rules = readRules();
+        cfg.PageVersion = 2;
       }
 
       page.addEventListener('pageshow', function () {

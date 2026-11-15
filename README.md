@@ -14,7 +14,7 @@ Tested on Jellyfin 10.11.
 
 ## Settings
 
-Open Dashboard and click Library Organizer in the left sidebar.
+Open Dashboard and click Library Organizer in the left sidebar. The page title shows its version; if it doesn't match the plugin version you installed, hard-refresh the browser (Ctrl+Shift+R).
 
 **Rules.** Each rule builds one collection:
 
