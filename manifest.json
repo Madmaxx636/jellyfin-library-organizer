@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.6.0.0",
+        "changelog": "Generated poster, thumb and backdrop artwork for every collection, with modes, styles and per-collection overrides.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.6.0/LibraryOrganizer_0.6.0.0.zip",
+        "checksum": "a043ba1806596c1ca1f8dab668657c08",
+        "timestamp": "2026-11-15T01:36:59Z"
+      },
+      {
         "version": "0.5.1.0",
         "changelog": "Fixes an old cached settings page resetting the stricter Christmas rule on save. Tightens the Christmas rule on upgrade even if edited. Warns about loose rules.",
         "targetAbi": "10.11.0.0",
