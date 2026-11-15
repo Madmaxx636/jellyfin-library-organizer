@@ -60,24 +60,33 @@ public class SyncCollectionsTask : IScheduledTask
 
         var items = LibraryQuery.MoviesAndSeries(_library);
         var taken = new HashSet<string>(config.Rules.Select(r => r.Name), StringComparer.OrdinalIgnoreCase);
-        var auto = LibraryQuery.BuildAutoRules(config, items, taken);
-
-        // An automatic collection with exactly the same items as one of your rules would just be a duplicate.
-        var manualSets = manual.Select(r => LibraryQuery.Match(r, items).Select(i => i.Id).ToHashSet()).ToList();
-        auto = auto.Where(a =>
-        {
-            var ids = LibraryQuery.Match(a, items).Select(i => i.Id).ToHashSet();
-            return !manualSets.Any(m => m.SetEquals(ids));
-        }).ToList();
-
         var existing = _library.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = new[] { BaseItemKind.BoxSet },
             Recursive = true
         }).OfType<BoxSet>().ToList();
 
+        var auto = LibraryQuery.BuildAutoRules(config, items, taken);
+
+        // An automatic collection with exactly the same items as one of your rules would just be a duplicate.
+        var manualSets = manual.Select(r => LibraryQuery.Match(r, items).Select(i => i.Id).ToHashSet()).ToList();
+        auto = auto.Where(a =>
+        {
+            // Jellyfin's own "automatically add to collection" option may already have made this franchise.
+            var madeByJellyfin = a.Franchises.Length > 0
+                && existing.Any(b => a.Franchises.Any(f => string.Equals(b.Name, f, StringComparison.OrdinalIgnoreCase)));
+            if (madeByJellyfin)
+            {
+                _log.LogInformation("Franchise '{Name}' already has a Jellyfin-made collection; skipping", a.Name);
+                return false;
+            }
+
+            var ids = LibraryQuery.Match(a, items).Select(i => i.Id).ToHashSet();
+            return !manualSets.Any(m => m.SetEquals(ids));
+        }).ToList();
+
         var all = manual.Select(r => (Rule: r, Min: config.MinItems))
-            .Concat(auto.Select(r => (Rule: r, Min: config.AutoMinItems)))
+            .Concat(auto.Select(r => (Rule: r, Min: r.Franchises.Length > 0 ? Math.Max(2, config.FranchiseMinItems) : r.Countries.Length > 0 ? config.MinItems : config.AutoMinItems)))
             .ToList();
 
         var managed = new List<string>();
@@ -111,10 +120,32 @@ public class SyncCollectionsTask : IScheduledTask
             }
         }
 
+        // One time: earlier versions made a collection for every country ("Movies from Peru"). Only the countries
+        // you list in settings get one now, so remove the ones this plugin made that no rule asks for any more.
+        var deletedLegacy = new List<string>();
+        if (!config.LegacyCountryCleanupDone)
+        {
+            var wanted = new HashSet<string>(all.Select(a => a.Rule.Name), StringComparer.OrdinalIgnoreCase);
+            foreach (var name in config.ManagedCollectionNames.Where(n =>
+                         System.Text.RegularExpressions.Regex.IsMatch(n, "^(Movies|Series|Titles) from ") && !wanted.Contains(n)))
+            {
+                var box = existing.FirstOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (box is not null)
+                {
+                    _library.DeleteItem(box, new DeleteOptions { DeleteFileLocation = false });
+                    _log.LogInformation("Removed old per-country collection '{Name}'; only countries you list in settings get one now", name);
+                }
+
+                deletedLegacy.Add(name);
+            }
+
+            config.LegacyCountryCleanupDone = true;
+        }
+
         // Keep names of removed rules while deletion is off, so turning it on later still cleans up.
         var keep = config.DeleteRemovedCollections
             ? new List<string>()
-            : config.ManagedCollectionNames.Where(n => !managed.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList();
+            : config.ManagedCollectionNames.Where(n => !managed.Contains(n, StringComparer.OrdinalIgnoreCase) && !deletedLegacy.Contains(n, StringComparer.OrdinalIgnoreCase)).ToList();
         config.ManagedCollectionNames = managed.Concat(keep).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         config.AutoRules = auto;
         plugin?.SaveConfiguration();

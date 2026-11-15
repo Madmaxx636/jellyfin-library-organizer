@@ -2,10 +2,10 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Library Organizer</title></head>
 <body>
-<div id="OrganizerPageP3" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div id="OrganizerPageP4" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
   <div data-role="content">
     <div class="content-primary">
-      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 0.6.0, version 3</small></h1>
+      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 0.7.0, version 4</small></h1>
       <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries, studios and ratings match exactly (ignoring case); title keywords match anywhere in the title; languages can be names (Korean) or codes (kor).</p>
 
       <details id="values" style="margin:1em 0">
@@ -23,11 +23,15 @@
         </div>
 
         <h2>Automatic collections</h2>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGenre" /><span>One collection per genre ("Comedy Movies")</span></label></div>
-        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoCountry" /><span>One collection per country ("Movies from Japan")</span></label></div>
+        <p>These build themselves from your library. Nothing is created for a country unless you list it here.</p>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoFranchise" /><span>Group movies from the same franchise (Star Wars, Indiana Jones...) using the collection TMDb gives each movie</span></label></div>
+        <label style="margin-left:2em">A franchise needs at least <input type="number" id="franchiseMin" min="2" style="width:5em"> movies</label>
+        <div class="checkboxContainer" style="margin-top:.8em"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGenre" /><span>One collection per genre ("Comedy Movies")</span></label></div>
+        <label style="display:block;margin:.8em 0">Countries to group, comma separated (for example Philippines, United Kingdom, Japan). Each becomes "Filipino Movies", "British Movies", "Japanese Movies" and so on.<br>
+          <input type="text" id="autoCountries" placeholder="Philippines, United Kingdom" style="width:100%"></label>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoHome" /><span>Also show these on the home screen (can get crowded)</span></label></div>
         <label>For <select id="autoType"><option>Movie</option><option>Series</option><option>Both</option></select></label>
-        <label style="margin-left:1em">Only if at least <input type="number" id="autoMin" min="1" style="width:5em"> items</label>
+        <label style="margin-left:1em">Genre collections only if at least <input type="number" id="autoMin" min="1" style="width:5em"> items</label>
 
         <h2>Artwork</h2>
         <p>Makes a poster, thumb and backdrop for each collection from the artwork of the titles inside it. It is drawn on your server and only redrawn when a collection changes.</p>
@@ -53,12 +57,12 @@
   <script type="text/javascript">
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
-      var page = document.querySelector('#OrganizerPageP3');
+      var page = document.querySelector('#OrganizerPageP4');
       var cfg = null, lastList = null;
 
       var listFields = [
         ['Genres', 'Genres'], ['Tags', 'Tags'], ['Countries', 'Countries (production)'], ['Studios', 'Studios'],
-        ['OfficialRatings', 'Official ratings'], ['TitleKeywords', 'Title keywords'], ['Languages', 'Audio languages']
+        ['OfficialRatings', 'Official ratings'], ['TitleKeywords', 'Title keywords'], ['Languages', 'Audio languages'], ['Franchises', 'Franchises (TMDb collection names, movies)']
       ];
       var excludeFields = [
         ['ExcludeGenres', 'Not these genres'], ['ExcludeTags', 'Not these tags'],
@@ -296,7 +300,7 @@
 
       function renderValues(v) {
         var body = page.querySelector('#valuesBody'); body.innerHTML = '';
-        [['Genres', v.Genres], ['Tags', v.Tags], ['Countries', v.Countries], ['Studios', v.Studios], ['Ratings', v.Ratings]].forEach(function (g) {
+        [['Genres', v.Genres], ['Tags', v.Tags], ['Countries', v.Countries], ['Franchises', v.Franchises], ['Studios', v.Studios], ['Ratings', v.Ratings]].forEach(function (g) {
           var d = el('<div style="margin:.5em 0"><b>' + g[0] + ':</b> </div>');
           (g[1] || []).slice(0, 60).forEach(function (x) {
             var s = el('<span style="cursor:pointer;margin-right:.8em;text-decoration:underline dotted">' + esc(x.Name) + ' (' + x.Count + ')</span>');
@@ -321,14 +325,16 @@
         cfg.ArtworkStyle = page.querySelector('#artStyle').value;
         cfg.DeleteRemovedCollections = page.querySelector('#deleteRemoved').checked;
         cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
-        cfg.AutoCountryCollections = page.querySelector('#autoCountry').checked;
+        cfg.AutoCountries = page.querySelector('#autoCountries').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+        cfg.AutoFranchiseCollections = page.querySelector('#autoFranchise').checked;
+        cfg.FranchiseMinItems = Number(page.querySelector('#franchiseMin').value) || 2;
         cfg.AutoShowOnHome = page.querySelector('#autoHome').checked;
         cfg.AutoMediaType = page.querySelector('#autoType').value;
         cfg.AutoMinItems = Number(page.querySelector('#autoMin').value) || 1;
         cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
         cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
         cfg.Rules = readRules();
-        cfg.PageVersion = 3;
+        cfg.PageVersion = 4;
       }
 
       page.addEventListener('pageshow', function () {
@@ -345,7 +351,9 @@
           page.querySelector('#artStyle').value = c.ArtworkStyle || 'Mosaic';
           page.querySelector('#deleteRemoved').checked = c.DeleteRemovedCollections;
           page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
-          page.querySelector('#autoCountry').checked = c.AutoCountryCollections;
+          page.querySelector('#autoCountries').value = (c.AutoCountries || []).join(', ');
+          page.querySelector('#autoFranchise').checked = c.AutoFranchiseCollections;
+          page.querySelector('#franchiseMin').value = c.FranchiseMinItems || 2;
           page.querySelector('#autoHome').checked = c.AutoShowOnHome;
           page.querySelector('#autoType').value = c.AutoMediaType || 'Movie';
           page.querySelector('#autoMin').value = c.AutoMinItems;
@@ -359,6 +367,8 @@
         ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('LibraryOrganizer/Values'), dataType: 'json' })
           .then(renderValues).catch(function () { page.querySelector('#valuesBody').textContent = 'Could not load library values.'; });
       });
+
+      page.querySelector('#autoCountries').onfocus = function () { lastList = this; };
 
       page.querySelector('#addRule').onclick = function () { page.querySelector('#rules').appendChild(renderRule({})); };
       page.querySelector('#addTemplate').onclick = function () {

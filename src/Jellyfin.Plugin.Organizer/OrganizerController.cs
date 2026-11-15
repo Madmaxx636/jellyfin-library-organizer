@@ -17,7 +17,8 @@ public record LibraryValues(
     List<ValueCount> Tags,
     List<ValueCount> Countries,
     List<ValueCount> Studios,
-    List<ValueCount> Ratings);
+    List<ValueCount> Ratings,
+    List<ValueCount> Franchises);
 
 public record PreviewItem(string Id, string Name, int? Year, List<string> Why);
 
@@ -50,7 +51,8 @@ public class OrganizerController : ControllerBase
             Count(items.SelectMany(i => i.Tags)),
             Count(items.SelectMany(i => i.ProductionLocations)),
             Count(items.SelectMany(i => i.Studios)),
-            Count(items.Select(i => i.OfficialRating)));
+            Count(items.Select(i => i.OfficialRating)),
+            Count(items.OfType<MediaBrowser.Controller.Entities.Movies.Movie>().Select(m => m.CollectionName)));
     }
 
     /// <summary>Looks up genres on Wikidata by name for the settings page.</summary>

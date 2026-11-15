@@ -60,6 +60,9 @@ public class CollectionRule
     /// <summary>Optional #RRGGBB accent colour for the generated artwork; empty picks one from the name.</summary>
     public string AccentColor { get; set; } = string.Empty;
 
+    /// <summary>TMDb collection / franchise names (for example "Star Wars Collection"). Movies only.</summary>
+    public string[] Franchises { get; set; } = Array.Empty<string>();
+
     /// <summary>Show this collection as a row on the home screen (needs Home Screen Sections).</summary>
     public bool ShowOnHome { get; set; } = true;
 
@@ -117,8 +120,16 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>One collection per genre ("Comedy Movies").</summary>
     public bool AutoGenreCollections { get; set; } = true;
 
-    /// <summary>One collection per production country ("Movies from Japan").</summary>
-    public bool AutoCountryCollections { get; set; } = true;
+    /// <summary>
+    /// Countries to make a collection for ("Filipino Movies", "British Movies"). Only these; empty means none.
+    /// </summary>
+    public string[] AutoCountries { get; set; } = Array.Empty<string>();
+
+    /// <summary>Group movies that belong to the same franchise (Star Wars, Indiana Jones) from TMDb collection data.</summary>
+    public bool AutoFranchiseCollections { get; set; } = true;
+
+    /// <summary>A franchise needs at least this many movies in your library.</summary>
+    public int FranchiseMinItems { get; set; } = 2;
 
     /// <summary>Movies, Series or Both for the automatic collections.</summary>
     public string AutoMediaType { get; set; } = "Movie";
@@ -145,13 +156,13 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Bumped when a new version needs to change older saved settings once.</summary>
     public int SettingsVersion { get; set; }
 
-    public const int CurrentSettingsVersion = 5;
+    public const int CurrentSettingsVersion = 6;
 
     /// <summary>
     /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
     /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
     /// </summary>
-    public const int CurrentPageVersion = 3;
+    public const int CurrentPageVersion = 4;
 
     public int PageVersion { get; set; }
 
@@ -203,6 +214,21 @@ public class PluginConfiguration : BasePluginConfiguration
             incoming.ArtworkStyle = existing.ArtworkStyle;
         }
 
+        if (incoming.PageVersion < 4)
+        {
+            incoming.AutoCountries = existing.AutoCountries;
+            incoming.AutoFranchiseCollections = existing.AutoFranchiseCollections;
+            incoming.FranchiseMinItems = existing.FranchiseMinItems;
+            foreach (var rule in incoming.Rules)
+            {
+                var old = existing.Rules.FirstOrDefault(r => string.Equals(r.Name, rule.Name, StringComparison.OrdinalIgnoreCase));
+                if (old is not null)
+                {
+                    rule.Franchises = old.Franchises;
+                }
+            }
+        }
+
         incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);
         incoming.PageVersion = CurrentPageVersion;
     }
@@ -223,7 +249,6 @@ public class PluginConfiguration : BasePluginConfiguration
         if (config.SettingsVersion < 2)
         {
             config.AutoGenreCollections = true;
-            config.AutoCountryCollections = true;
             config.SyncOnLibraryChange = true;
             config.SyncOnStartup = true;
         }
@@ -250,12 +275,27 @@ public class PluginConfiguration : BasePluginConfiguration
             }
         }
 
+        if (config.SettingsVersion < 6)
+        {
+            // Version 6 replaced "one collection per country" with a list of countries you choose, and added
+            // franchise collections. Start the list with the examples asked for; edit it in settings.
+            if (config.AutoCountries.Length == 0)
+            {
+                config.AutoCountries = new[] { "Philippines", "United Kingdom" };
+            }
+
+            config.AutoFranchiseCollections = true;
+        }
+
         config.SettingsVersion = CurrentSettingsVersion;
         return true;
     }
 
     /// <summary>Delete a collection this plugin made when its rule is removed or disabled. Media files are never touched.</summary>
     public bool DeleteRemovedCollections { get; set; }
+
+    /// <summary>Set once the old "Movies from X" collections (one per country, made before 0.7) were cleaned up.</summary>
+    public bool LegacyCountryCleanupDone { get; set; }
 
     // Written by the sync task, not edited by hand.
     public List<CollectionRule> AutoRules { get; set; } = new();

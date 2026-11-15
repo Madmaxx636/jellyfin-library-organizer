@@ -36,7 +36,7 @@ public static class RuleMatcher
 
         if (AnyEq(rule.ExcludeGenres, item.Genres)
             || AnyEq(rule.ExcludeTags, item.Tags)
-            || AnyEq(rule.ExcludeCountries, item.ProductionLocations)
+            || AnyEqCountry(rule.ExcludeCountries, item.ProductionLocations)
             || Clean(rule.ExcludeKeywords).Any(k => Contains(item.Name, k)))
         {
             return false;
@@ -63,7 +63,8 @@ public static class RuleMatcher
 
         AddCheck(checks, rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
         AddCheck(checks, rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
-        AddCheck(checks, rule.Countries, v => item.ProductionLocations.Any(c => Eq(c, v)));
+        AddCheck(checks, rule.Countries, v => item.ProductionLocations.Any(c => CountryNames.Same(c, v)));
+        AddCheck(checks, rule.Franchises, v => item is MediaBrowser.Controller.Entities.Movies.Movie m && Eq(m.CollectionName, v));
         AddCheck(checks, rule.Studios, v => item.Studios.Any(s => Eq(s, v)));
         AddCheck(checks, rule.OfficialRatings, v => Eq(item.OfficialRating, v));
         AddCheck(checks, rule.TitleKeywords, v => Contains(item.Name, v));
@@ -111,7 +112,8 @@ public static class RuleMatcher
 
         Hits("genre", rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
         Hits("tag", rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
-        Hits("country", rule.Countries, v => item.ProductionLocations.Any(c => Eq(c, v)));
+        Hits("country", rule.Countries, v => item.ProductionLocations.Any(c => CountryNames.Same(c, v)));
+        Hits("franchise", rule.Franchises, v => item is MediaBrowser.Controller.Entities.Movies.Movie m && Eq(m.CollectionName, v));
         Hits("studio", rule.Studios, v => item.Studios.Any(s => Eq(s, v)));
         Hits("rating", rule.OfficialRatings, v => Eq(item.OfficialRating, v));
         Hits("title word", rule.TitleKeywords, v => Contains(item.Name, v));
@@ -145,6 +147,12 @@ public static class RuleMatcher
     {
         var vals = Clean(values);
         if (vals.Length > 0) checks.Add(vals.Any(test));
+    }
+
+    private static bool AnyEqCountry(string[] wanted, IEnumerable<string> have)
+    {
+        var w = Clean(wanted);
+        return w.Length > 0 && have.Any(h => w.Any(x => CountryNames.Same(h, x)));
     }
 
     private static bool AnyEq(string[] wanted, IEnumerable<string> have)

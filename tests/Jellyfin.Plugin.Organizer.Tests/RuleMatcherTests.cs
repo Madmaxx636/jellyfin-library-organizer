@@ -90,7 +90,7 @@ public class RuleMatcherTests
     [Fact]
     public void AutoRulesSkipNamesAlreadyTaken()
     {
-        var cfg = new PluginConfiguration { AutoGenreCollections = true, AutoMinItems = 2 };
+        var cfg = new PluginConfiguration { AutoGenreCollections = true, AutoMinItems = 2, AutoFranchiseCollections = false };
         var items = new System.Collections.Generic.List<MediaBrowser.Controller.Entities.BaseItem>
         {
             Film("A", 2000, new[] { "Comedy", "Drama" }), Film("B", 2001, new[] { "Comedy", "Drama" }),
@@ -141,10 +141,9 @@ public class MigrationTests
     [Fact]
     public void OlderSettingsGetAutoCollectionsTurnedOnOnce()
     {
-        var cfg = new PluginConfiguration { AutoGenreCollections = false, AutoCountryCollections = false, SettingsVersion = 0 };
+        var cfg = new PluginConfiguration { AutoGenreCollections = false, SettingsVersion = 0 };
         Assert.True(PluginConfiguration.Migrate(cfg));
         Assert.True(cfg.AutoGenreCollections);
-        Assert.True(cfg.AutoCountryCollections);
         // A later choice to switch them off must stick.
         cfg.AutoGenreCollections = false;
         Assert.False(PluginConfiguration.Migrate(cfg));

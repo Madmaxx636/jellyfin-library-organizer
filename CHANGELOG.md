@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0 - Franchises, and only the countries you choose
+
+New
+- **Franchise collections.** Movies from the same franchise (Star Wars, Indiana Jones, The Lord of the Rings...) are grouped automatically, using the collection TMDb gives each movie. Names drop the word "Collection" ("Star Wars Collection" becomes "Star Wars"), movies are in release order, and a franchise needs at least 2 movies (you can raise that). Turn it off in settings.
+- **Franchises field on rules**, so you can also build your own rule from a TMDb collection name, and a "Franchises" list in the "What is in my library" panel.
+- **Artwork for all of these** as for every collection: the first film of a franchise leads its cover.
+
+Changed
+- **Countries are no longer grouped automatically. Only the countries you list in settings get a collection**, named with the adjective: Philippines gives "Filipino Movies", United Kingdom gives "British Movies", Japan gives "Japanese Movies" and so on (others become "Movies from Peru"). The list starts with Philippines and United Kingdom; edit it in Settings, "Automatic collections". USA, United States and United States of America count as the same country, as do the other common spellings.
+- **One-time cleanup:** the old "Movies from X" collections that earlier versions made for every country are removed on the first sync after updating, unless you list that country. Only collections the plugin made are removed; your media is never touched.
+- A franchise Jellyfin already made itself (its built-in "automatically add to collection" option) is skipped so you don't get two.
+- The settings page has a new address (page version 4).
+
 ## 0.6.0 - Artwork for every collection
 
 - **Posters, thumbs and backdrops for all your collections**, made automatically. The default is a mosaic of the posters of the titles inside, with the collection name, a title count and an accent colour picked from the name. The thumb and backdrop (used by home screen rows and the collection page) use the titles' backdrops. Collections with no artwork to draw from get a plain colour title card.

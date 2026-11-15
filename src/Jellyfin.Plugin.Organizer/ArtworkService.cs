@@ -32,8 +32,10 @@ public class ArtworkService
     }
 
     /// <summary>Which titles' artwork to show, best-rated first, with a stable order so images don't churn.</summary>
-    public static List<BaseItem> PickTitles(IEnumerable<BaseItem> matched) =>
-        matched.OrderByDescending(i => i.CommunityRating ?? 0).ThenBy(i => i.Id).ToList();
+    public static List<BaseItem> PickTitles(IEnumerable<BaseItem> matched, bool releaseOrder = false) =>
+        releaseOrder
+            ? matched.OrderBy(i => i.PremiereDate ?? (i.ProductionYear is int y && y > 0 ? new DateTime(y, 1, 1) : DateTime.MaxValue)).ThenBy(i => i.Id).ToList()
+            : matched.OrderByDescending(i => i.CommunityRating ?? 0).ThenBy(i => i.Id).ToList();
 
     public static string Hash(string name, string style, string accent, int count, IEnumerable<string> posters, IEnumerable<string> wides)
     {
@@ -49,7 +51,8 @@ public class ArtworkService
             return;
         }
 
-        var ordered = PickTitles(matched);
+        // A franchise reads best in release order: the first film leads the cover.
+        var ordered = PickTitles(matched, rule.Franchises.Length > 0);
         var posters = ordered.Select(i => LocalImage(i, ImageType.Primary)).Where(p => p is not null).Select(p => p!).Take(6).ToList();
         var wides = ordered.Select(i => LocalImage(i, ImageType.Backdrop)).Where(p => p is not null).Select(p => p!).Take(5).ToList();
         if (wides.Count == 0)

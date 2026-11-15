@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Jellyfin.Data.Enums;
@@ -34,11 +35,28 @@ public static class LibraryQuery
         config.Rules.Where(r => r.Enabled && !string.IsNullOrWhiteSpace(r.Name))
             .Concat(config.AutoRules.Where(r => r.Enabled));
 
+    /// <summary>"Star Wars Collection" (the TMDb name) becomes "Star Wars".</summary>
+    public static string FranchiseTitle(string tmdbName)
+    {
+        var name = (tmdbName ?? string.Empty).Trim();
+        foreach (var suffix in new[] { " Collection", " - Collection", " (Collection)" })
+        {
+            if (name.EndsWith(suffix, System.StringComparison.OrdinalIgnoreCase) && name.Length > suffix.Length)
+            {
+                return name[..^suffix.Length].Trim();
+            }
+        }
+
+        return name;
+    }
+
     public static List<CollectionRule> BuildAutoRules(
         PluginConfiguration config, IReadOnlyList<BaseItem> items, ISet<string> takenNames)
     {
         var result = new List<CollectionRule>();
-        if (!config.AutoGenreCollections && !config.AutoCountryCollections)
+        var countries = config.AutoCountries.Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim()).Distinct(System.StringComparer.OrdinalIgnoreCase).ToList();
+        if (!config.AutoGenreCollections && countries.Count == 0 && !config.AutoFranchiseCollections)
         {
             return result;
         }
@@ -48,13 +66,12 @@ public static class LibraryQuery
         var noun = type switch { "Series" => "Series", "Both" => "Titles", _ => "Movies" };
         var position = 1000;
 
-        void Add(string name, CollectionRule rule, int count)
+        void Add(string name, CollectionRule rule, int count, int minimum)
         {
-            if (count < config.AutoMinItems || takenNames.Contains(name)) return;
+            if (count < minimum || takenNames.Contains(name)) return;
             rule.Name = name;
-            rule.MediaType = type;
+            rule.MediaType = rule.MediaType == "Movie" && type != "Movie" && rule.Franchises.Length == 0 ? type : rule.MediaType;
             rule.Position = position++;
-            rule.ItemOrder = "SortName";
             rule.ShowOnHome = config.AutoShowOnHome;
             result.Add(rule);
             takenNames.Add(name);
@@ -66,17 +83,41 @@ public static class LibraryQuery
                          .GroupBy(g => g.Trim(), System.StringComparer.OrdinalIgnoreCase)
                          .OrderBy(g => g.Key, System.StringComparer.OrdinalIgnoreCase))
             {
-                Add($"{g.Key} {noun}", new CollectionRule { Genres = new[] { g.Key } }, g.Count());
+                Add($"{g.Key} {noun}", new CollectionRule { Genres = new[] { g.Key }, MediaType = type, ItemOrder = "SortName" },
+                    g.Count(), config.AutoMinItems);
             }
         }
 
-        if (config.AutoCountryCollections)
+        // Only the countries named in settings, never every country in the library.
+        position = 500;
+        foreach (var country in countries)
         {
-            foreach (var c in pool.SelectMany(i => i.ProductionLocations).Where(c => !string.IsNullOrWhiteSpace(c))
-                         .GroupBy(c => c.Trim(), System.StringComparer.OrdinalIgnoreCase)
-                         .OrderBy(c => c.Key, System.StringComparer.OrdinalIgnoreCase))
+            var count = pool.Count(i => i.ProductionLocations.Any(c => CountryNames.Same(c, country)));
+            Add(CountryNames.CollectionName(country, noun),
+                new CollectionRule { Countries = new[] { CountryNames.Canon(country) }, MediaType = type, ItemOrder = "SortName" },
+                count, config.MinItems);
+        }
+
+        // Real franchises (Star Wars, Indiana Jones) from the collection names TMDb gives each movie.
+        if (config.AutoFranchiseCollections)
+        {
+            position = 2000;
+            var groups = items.OfType<Movie>()
+                .Where(m => !string.IsNullOrWhiteSpace(m.CollectionName))
+                .GroupBy(m => m.CollectionName!.Trim(), System.StringComparer.OrdinalIgnoreCase)
+                .OrderBy(g => FranchiseTitle(g.Key), System.StringComparer.OrdinalIgnoreCase);
+            foreach (var g in groups)
             {
-                Add($"{noun} from {c.Key}", new CollectionRule { Countries = new[] { c.Key } }, c.Count());
+                Add(FranchiseTitle(g.Key),
+                    new CollectionRule
+                    {
+                        Franchises = new[] { g.Key },
+                        MediaType = "Movie",
+                        ItemOrder = "PremiereDate",
+                        HomeSort = "PremiereDate",
+                        HomeDescending = false
+                    },
+                    g.Count(), Math.Max(2, config.FranchiseMinItems));
             }
         }
 
