@@ -35,6 +35,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         changed |= PluginConfiguration.Migrate(Configuration);
         WikidataLists.Enabled = Configuration.UsePublicDatabase;
+        Learning.Directory = DataFolderPath;
+        Learning.Load();
+        Learning.LearnSignals = Configuration.LearnFromLibrary;
+        Learning.CheckOnline = Configuration.CheckUnsureOnline;
 
         if (changed)
         {
@@ -44,6 +48,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         ConfigurationChanged += (_, _) =>
         {
             WikidataLists.Enabled = Configuration.UsePublicDatabase;
+            Learning.LearnSignals = Configuration.LearnFromLibrary;
+            Learning.CheckOnline = Configuration.CheckUnsureOnline;
             HomeSections.Register(Configuration, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
         };
     }

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0 - More story orders, and Christmas that stays Christmas
+
+New
+- **Story order for 19 more franchises:** Marvel Cinematic Universe, X-Men, Fast and Furious (Tokyo Drift in its place), Planet of the Apes, Alien, Middle-earth (Hobbit first), Mad Max, Predator, The Conjuring films, Transformers, Despicable Me, The Hunger Games, Insidious, The Purge, Monsters Inc., Kingsman, The Omen, Underworld and Hannibal Lecter. They are matched by title and year, so they work with any metadata provider. Star Wars and Indiana Jones are unchanged.
+- **Automatic franchise collections now default to story order**, falling back to release order for franchises without a built-in one. Your existing setting is switched once from Release to Story; change it under Automatic if you prefer release order.
+- **Learns which tags and genres to trust.** On a rule that uses a public list (the Christmas rule), a tag or genre that almost never shows up on that list, like "Musical", stops counting for that rule. Words the rule also searches titles for (like "christmas") are never ignored, and a tag you removed three or more titles for counts against itself.
+- **Checks unsure titles on Wikidata.** A title matched by only one weak signal is looked up by its IMDb id. If Wikidata knows the film, lists genres for it and none is the one the rule wants, it is left out. A title with the word in its name, or one you included yourself, is never left out this way. Answers are remembered for 90 days.
+- **Preview shows how sure each match is:** Confirmed (on the public list or included by you), Likely (two kinds of signal agree) or Unsure (one weak signal).
+- **"What the plugin learned" on the Overview tab** lists ignored tags and genres and titles ruled out online, each with a button to undo it ("Use it anyway", "Keep it").
+- Two new switches in Settings turn the learning and the online check off.
+
+Notes
+- The online check sends the IMDb ids of the few unsure titles to Wikidata (nothing else). Turn it off in Settings, or turn off the public database, to stay fully offline.
+- The settings page has a new address (page version 7).
+
 ## 1.0.1 - Same release, new version number
 
 Changed

@@ -20,11 +20,17 @@ public record LibraryValues(
     List<ValueCount> Ratings,
     List<ValueCount> Franchises);
 
-public record PreviewItem(string Id, string Name, int? Year, List<string> Why);
+public record PreviewItem(string Id, string Name, int? Year, List<string> Why, string? Verdict);
 
 public record PreviewResult(int Count, List<PreviewItem> Items, bool HasBuiltInStory);
 
-public record StatusResult(SyncReport? Last, int Collections, string Version);
+public record RuledOutTitle(string Rule, string Id, string Name, int? Year);
+
+public record LearnedResult(List<LearnedSignal> Signals, List<RuledOutTitle> RuledOut);
+
+public record TrustRequest(string Rule, string Kind, string Value, bool Trust);
+
+public record StatusResult(SyncReport? Last, int Collections, string Version, List<string> StoryNames);
 
 [ApiController]
 [Authorize(Policy = "RequiresElevation")]
@@ -81,12 +87,14 @@ public class OrganizerController : ControllerBase
     public async Task<ActionResult<PreviewResult>> Preview([FromBody] CollectionRule rule, CancellationToken ct)
     {
         await WikidataLists.EnsureAsync(rule.PublicGenres, null, ct).ConfigureAwait(false);
-        var matched = LibraryQuery.Match(rule, LibraryQuery.MoviesAndSeries(_library));
+        var all = LibraryQuery.MoviesAndSeries(_library);
+        await Learning.AnalyzeAsync(rule, all, null, ct).ConfigureAwait(false);
+        var matched = LibraryQuery.Match(rule, all);
 
         // Shown in the order the collection will have, so this doubles as a check of the sort settings.
         var items = ItemSorter.Order(matched, rule.ItemOrder, rule.ItemDescending, rule.StoryOrder)
             .Take(500)
-            .Select(i => new PreviewItem(i.Id.ToString("N"), i.Name, i.ProductionYear, RuleMatcher.Explain(rule, i)))
+            .Select(i => new PreviewItem(i.Id.ToString("N"), i.Name, i.ProductionYear, RuleMatcher.Explain(rule, i), RuleMatcher.Verdict(rule, i)))
             .ToList();
         return new PreviewResult(matched.Count, items, ItemSorter.HasBuiltInStory(matched));
     }
@@ -101,6 +109,11 @@ public class OrganizerController : ControllerBase
         await WikidataLists.EnsureAsync(manual.SelectMany(r => r.PublicGenres), null, ct).ConfigureAwait(false);
 
         var items = LibraryQuery.MoviesAndSeries(_library);
+        foreach (var r in manual.Where(r => r.PublicGenres.Length > 0))
+        {
+            await Learning.AnalyzeAsync(r, items, null, ct).ConfigureAwait(false);
+        }
+
         var existing = _library.GetItemList(new MediaBrowser.Controller.Entities.InternalItemsQuery
         {
             IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.BoxSet },
@@ -138,6 +151,35 @@ public class OrganizerController : ControllerBase
         return plan;
     }
 
+    /// <summary>What the plugin has learned: ignored tags and genres, and titles ruled out online.</summary>
+    [HttpGet("Learned")]
+    public ActionResult<LearnedResult> Learned()
+    {
+        var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
+        var items = LibraryQuery.MoviesAndSeries(_library);
+        var ruledOut = new List<RuledOutTitle>();
+        foreach (var rule in config.Rules.Where(r => r.Enabled && r.PublicGenres.Length > 0))
+        {
+            ruledOut.AddRange(items.Where(i => Learning.RuledOut(rule, i))
+                .Select(i => new RuledOutTitle(rule.Name, i.Id.ToString("N"), i.Name, i.ProductionYear)));
+        }
+
+        return new LearnedResult(Learning.Describe(), ruledOut);
+    }
+
+    /// <summary>Keep counting a tag or genre that was learned to be noise, or let it be learned again.</summary>
+    [HttpPost("Learned/Trust")]
+    public ActionResult Trust([FromBody] TrustRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Rule) || string.IsNullOrWhiteSpace(request.Value))
+        {
+            return BadRequest();
+        }
+
+        Learning.Trust(request.Rule, request.Kind == "genre" ? "genre" : "tag", request.Value, request.Trust);
+        return NoContent();
+    }
+
     /// <summary>When the last sync ran and what it did.</summary>
     [HttpGet("Status")]
     public ActionResult<StatusResult> Status()
@@ -147,6 +189,7 @@ public class OrganizerController : ControllerBase
             IncludeItemTypes = new[] { Jellyfin.Data.Enums.BaseItemKind.BoxSet },
             Recursive = true
         }).Count;
-        return new StatusResult(SyncReport.Load(), boxes, typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? string.Empty);
+        return new StatusResult(SyncReport.Load(), boxes, typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? string.Empty,
+            ItemSorter.BuiltInStoryNames.ToList());
     }
 }

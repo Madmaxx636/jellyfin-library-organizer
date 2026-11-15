@@ -33,6 +33,7 @@ public static class RuleMatcher
         var itemId = item.Id.ToString("N");
         if (ItemIds(rule.ExcludeItems).Contains(itemId)) return false;
         if (ItemIds(rule.IncludeItems).Contains(itemId)) return true;
+        if (Learning.RuledOut(rule, item)) return false;
 
         if (AnyEq(rule.ExcludeGenres, item.Genres)
             || AnyEq(rule.ExcludeTags, item.Tags)
@@ -61,8 +62,8 @@ public static class RuleMatcher
             checks.Add(publicHit);
         }
 
-        AddCheck(checks, rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
-        AddCheck(checks, rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
+        AddCheck(checks, Learning.Filter(rule, "genre", rule.Genres), v => item.Genres.Any(g => Eq(g, v)));
+        AddCheck(checks, Learning.Filter(rule, "tag", rule.Tags), v => item.Tags.Any(t => Eq(t, v)));
         AddCheck(checks, rule.Countries, v => item.ProductionLocations.Any(c => CountryNames.Same(c, v)));
         AddCheck(checks, rule.Franchises, v => item is MediaBrowser.Controller.Entities.Movies.Movie m && Eq(m.CollectionName, v));
         AddCheck(checks, rule.Studios, v => item.Studios.Any(s => Eq(s, v)));
@@ -93,6 +94,27 @@ public static class RuleMatcher
         return hits >= needed;
     }
 
+    /// <summary>
+    /// For rules with a public list: Confirmed (on the list, or you included it), Likely (two kinds of signal agree)
+    /// or Unsure (one weak signal). Null for rules without a public list.
+    /// </summary>
+    public static string? Verdict(CollectionRule rule, BaseItem item)
+    {
+        if (!WikidataLists.Enabled || Clean(rule.PublicGenres).Length == 0)
+        {
+            return null;
+        }
+
+        if (ItemIds(rule.IncludeItems).Contains(item.Id.ToString("N"))
+            || Clean(rule.PublicGenres).Any(e => WikidataLists.Contains(WikidataLists.Qid(e), item)))
+        {
+            return "Confirmed";
+        }
+
+        var kinds = Explain(rule, item).Select(w => w.Split(':')[0]).Distinct().Count();
+        return kinds >= 2 ? "Likely" : "Unsure";
+    }
+
     /// <summary>Plain-language reasons an item matched, for the preview.</summary>
     public static List<string> Explain(CollectionRule rule, BaseItem item)
     {
@@ -110,8 +132,8 @@ public static class RuleMatcher
             why.Add($"public database: {WikidataLists.Label(e)}");
         }
 
-        Hits("genre", rule.Genres, v => item.Genres.Any(g => Eq(g, v)));
-        Hits("tag", rule.Tags, v => item.Tags.Any(t => Eq(t, v)));
+        Hits("genre", Learning.Filter(rule, "genre", rule.Genres), v => item.Genres.Any(g => Eq(g, v)));
+        Hits("tag", Learning.Filter(rule, "tag", rule.Tags), v => item.Tags.Any(t => Eq(t, v)));
         Hits("country", rule.Countries, v => item.ProductionLocations.Any(c => CountryNames.Same(c, v)));
         Hits("franchise", rule.Franchises, v => item is MediaBrowser.Controller.Entities.Movies.Movie m && Eq(m.CollectionName, v));
         Hits("studio", rule.Studios, v => item.Studios.Any(s => Eq(s, v)));

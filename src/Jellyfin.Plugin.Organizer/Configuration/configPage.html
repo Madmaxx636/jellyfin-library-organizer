@@ -2,67 +2,67 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Library Organizer</title></head>
 <body>
-<div id="OrganizerPageP6" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div id="OrganizerPageP7" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
   <style>
-    #OrganizerPageP6 { --lo-line: rgba(127,127,127,.35); --lo-soft: rgba(127,127,127,.14); --lo-accent: var(--theme-primary-color, #00a4dc); }
-    #OrganizerPageP6 .lo-wrap { max-width: 62em; margin: 0 auto; padding: 1.6em 1em 6em; }
-    #OrganizerPageP6 h1 { margin: .6em 0 .1em; }
-    #OrganizerPageP6 h1 small { opacity: .5; font-size: .45em; font-weight: normal; margin-left: .5em; }
-    #OrganizerPageP6 .lo-sub { opacity: .7; margin: 0 0 1em; }
-    #OrganizerPageP6 .lo-tabs { display: flex; gap: .25em; border-bottom: 1px solid var(--lo-line); margin: 1em 0; overflow-x: auto; }
-    #OrganizerPageP6 .lo-tab { background: none; border: 0; border-bottom: 3px solid transparent; color: inherit; padding: .7em 1.1em; cursor: pointer; font-size: 1em; opacity: .7; white-space: nowrap; }
-    #OrganizerPageP6 .lo-tab.on { border-bottom-color: var(--lo-accent); opacity: 1; font-weight: 600; }
-    #OrganizerPageP6 .lo-panel { display: none; }
-    #OrganizerPageP6 .lo-panel.on { display: block; }
-    #OrganizerPageP6 .lo-card { border: 1px solid var(--lo-line); border-radius: 10px; margin: .8em 0; background: var(--lo-soft); }
-    #OrganizerPageP6 .lo-card > .lo-body { padding: .2em 1.1em 1em; }
-    #OrganizerPageP6 .lo-card h3 { margin: 1em 0 .4em; font-size: 1.05em; }
-    #OrganizerPageP6 .lo-head { display: flex; align-items: center; gap: .7em; padding: .7em 1em; cursor: pointer; flex-wrap: wrap; }
-    #OrganizerPageP6 .lo-head .lo-name { flex: 1 1 12em; font-weight: 600; font-size: 1.05em; min-width: 8em; }
-    #OrganizerPageP6 .lo-head .lo-name input { width: 100%; font-weight: 600; }
-    #OrganizerPageP6 .lo-art { width: 38px; height: 56px; border-radius: 4px; object-fit: cover; background: var(--lo-soft); display: none; }
-    #OrganizerPageP6 .lo-chip { display: inline-block; background: var(--lo-soft); border: 1px solid var(--lo-line); border-radius: 999px; padding: .1em .7em; font-size: .82em; margin: .1em .25em .1em 0; white-space: nowrap; }
-    #OrganizerPageP6 .lo-chip.ok { border-color: #3a3; color: #5c5; }
-    #OrganizerPageP6 .lo-chip.warn { border-color: #c80; color: #fb3; }
-    #OrganizerPageP6 .lo-chip.off { opacity: .6; }
-    #OrganizerPageP6 .lo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: .6em 1.2em; }
-    #OrganizerPageP6 label.lo-f { display: block; font-size: .92em; }
-    #OrganizerPageP6 label.lo-f > span { display: block; opacity: .75; margin-bottom: .2em; }
-    #OrganizerPageP6 input[type=text], #OrganizerPageP6 input[type=number], #OrganizerPageP6 input[type=search], #OrganizerPageP6 select {
+    #OrganizerPageP7 { --lo-line: rgba(127,127,127,.35); --lo-soft: rgba(127,127,127,.14); --lo-accent: var(--theme-primary-color, #00a4dc); }
+    #OrganizerPageP7 .lo-wrap { max-width: 62em; margin: 0 auto; padding: 1.6em 1em 6em; }
+    #OrganizerPageP7 h1 { margin: .6em 0 .1em; }
+    #OrganizerPageP7 h1 small { opacity: .5; font-size: .45em; font-weight: normal; margin-left: .5em; }
+    #OrganizerPageP7 .lo-sub { opacity: .7; margin: 0 0 1em; }
+    #OrganizerPageP7 .lo-tabs { display: flex; gap: .25em; border-bottom: 1px solid var(--lo-line); margin: 1em 0; overflow-x: auto; }
+    #OrganizerPageP7 .lo-tab { background: none; border: 0; border-bottom: 3px solid transparent; color: inherit; padding: .7em 1.1em; cursor: pointer; font-size: 1em; opacity: .7; white-space: nowrap; }
+    #OrganizerPageP7 .lo-tab.on { border-bottom-color: var(--lo-accent); opacity: 1; font-weight: 600; }
+    #OrganizerPageP7 .lo-panel { display: none; }
+    #OrganizerPageP7 .lo-panel.on { display: block; }
+    #OrganizerPageP7 .lo-card { border: 1px solid var(--lo-line); border-radius: 10px; margin: .8em 0; background: var(--lo-soft); }
+    #OrganizerPageP7 .lo-card > .lo-body { padding: .2em 1.1em 1em; }
+    #OrganizerPageP7 .lo-card h3 { margin: 1em 0 .4em; font-size: 1.05em; }
+    #OrganizerPageP7 .lo-head { display: flex; align-items: center; gap: .7em; padding: .7em 1em; cursor: pointer; flex-wrap: wrap; }
+    #OrganizerPageP7 .lo-head .lo-name { flex: 1 1 12em; font-weight: 600; font-size: 1.05em; min-width: 8em; }
+    #OrganizerPageP7 .lo-head .lo-name input { width: 100%; font-weight: 600; }
+    #OrganizerPageP7 .lo-art { width: 38px; height: 56px; border-radius: 4px; object-fit: cover; background: var(--lo-soft); display: none; }
+    #OrganizerPageP7 .lo-chip { display: inline-block; background: var(--lo-soft); border: 1px solid var(--lo-line); border-radius: 999px; padding: .1em .7em; font-size: .82em; margin: .1em .25em .1em 0; white-space: nowrap; }
+    #OrganizerPageP7 .lo-chip.ok { border-color: #3a3; color: #5c5; }
+    #OrganizerPageP7 .lo-chip.warn { border-color: #c80; color: #fb3; }
+    #OrganizerPageP7 .lo-chip.off { opacity: .6; }
+    #OrganizerPageP7 .lo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: .6em 1.2em; }
+    #OrganizerPageP7 label.lo-f { display: block; font-size: .92em; }
+    #OrganizerPageP7 label.lo-f > span { display: block; opacity: .75; margin-bottom: .2em; }
+    #OrganizerPageP7 input[type=text], #OrganizerPageP7 input[type=number], #OrganizerPageP7 input[type=search], #OrganizerPageP7 select {
       width: 100%; box-sizing: border-box; padding: .5em .6em; border-radius: 6px; border: 1px solid var(--lo-line); background: var(--lo-soft); color: inherit; font: inherit; }
-    #OrganizerPageP6 select option { background: Canvas; color: CanvasText; }
-    #OrganizerPageP6 .lo-check { display: flex; align-items: flex-start; gap: .55em; margin: .5em 0; cursor: pointer; }
-    #OrganizerPageP6 .lo-check input { margin-top: .25em; }
-    #OrganizerPageP6 button.lo-btn { background: var(--lo-soft); border: 1px solid var(--lo-line); color: inherit; border-radius: 6px; padding: .5em 1em; cursor: pointer; font: inherit; }
-    #OrganizerPageP6 button.lo-btn:hover { border-color: var(--lo-accent); }
-    #OrganizerPageP6 button.lo-btn.primary { background: var(--lo-accent); border-color: var(--lo-accent); color: #fff; }
-    #OrganizerPageP6 button.lo-btn.small { padding: .25em .7em; font-size: .85em; }
-    #OrganizerPageP6 button.lo-btn.danger:hover { border-color: #d44; color: #f77; }
-    #OrganizerPageP6 .lo-tools { display: flex; gap: .6em; align-items: center; flex-wrap: wrap; margin: .8em 0; }
-    #OrganizerPageP6 .lo-tools input[type=search] { flex: 1 1 14em; width: auto; }
-    #OrganizerPageP6 details { margin: .8em 0; }
-    #OrganizerPageP6 summary { cursor: pointer; opacity: .9; padding: .2em 0; }
-    #OrganizerPageP6 .lo-note { opacity: .7; font-size: .9em; margin: .3em 0; }
-    #OrganizerPageP6 .lo-warn { margin: .6em 0; padding: .6em .8em; border: 1px solid #c80; border-radius: 6px; color: #fb3; display: none; }
-    #OrganizerPageP6 .lo-row { display: flex; align-items: center; gap: .5em; margin: .25em 0; flex-wrap: wrap; }
-    #OrganizerPageP6 .lo-row .t { flex: 1 1 14em; }
-    #OrganizerPageP6 .lo-row .why { opacity: .65; font-size: .85em; }
-    #OrganizerPageP6 .lo-table { width: 100%; border-collapse: collapse; font-size: .92em; }
-    #OrganizerPageP6 .lo-table td, #OrganizerPageP6 .lo-table th { text-align: left; padding: .4em .6em; border-bottom: 1px solid var(--lo-line); }
-    #OrganizerPageP6 .lo-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(20,20,20,.94); border-top: 1px solid var(--lo-line); padding: .6em 1em; display: flex; gap: .6em; align-items: center; justify-content: flex-end; color: #eee; }
-    #OrganizerPageP6 .lo-bar .dirty { margin-right: auto; color: #fb3; display: none; }
-    #OrganizerPageP6 .lo-bar .msg { margin-right: auto; opacity: .85; }
-    #OrganizerPageP6 .lo-vals span.v { cursor: pointer; margin-right: .8em; text-decoration: underline dotted; display: inline-block; }
-    #OrganizerPageP6 .lo-body { display: none; }
-    #OrganizerPageP6 .lo-card.open > .lo-body { display: block; }
-    #OrganizerPageP6 .lo-caret { transition: transform .15s; opacity: .6; cursor: pointer; }
-    #OrganizerPageP6 .lo-card.open .lo-caret { transform: rotate(90deg); }
-    #OrganizerPageP6 .lo-card.static > .lo-body { display: block; }
+    #OrganizerPageP7 select option { background: Canvas; color: CanvasText; }
+    #OrganizerPageP7 .lo-check { display: flex; align-items: flex-start; gap: .55em; margin: .5em 0; cursor: pointer; }
+    #OrganizerPageP7 .lo-check input { margin-top: .25em; }
+    #OrganizerPageP7 button.lo-btn { background: var(--lo-soft); border: 1px solid var(--lo-line); color: inherit; border-radius: 6px; padding: .5em 1em; cursor: pointer; font: inherit; }
+    #OrganizerPageP7 button.lo-btn:hover { border-color: var(--lo-accent); }
+    #OrganizerPageP7 button.lo-btn.primary { background: var(--lo-accent); border-color: var(--lo-accent); color: #fff; }
+    #OrganizerPageP7 button.lo-btn.small { padding: .25em .7em; font-size: .85em; }
+    #OrganizerPageP7 button.lo-btn.danger:hover { border-color: #d44; color: #f77; }
+    #OrganizerPageP7 .lo-tools { display: flex; gap: .6em; align-items: center; flex-wrap: wrap; margin: .8em 0; }
+    #OrganizerPageP7 .lo-tools input[type=search] { flex: 1 1 14em; width: auto; }
+    #OrganizerPageP7 details { margin: .8em 0; }
+    #OrganizerPageP7 summary { cursor: pointer; opacity: .9; padding: .2em 0; }
+    #OrganizerPageP7 .lo-note { opacity: .7; font-size: .9em; margin: .3em 0; }
+    #OrganizerPageP7 .lo-warn { margin: .6em 0; padding: .6em .8em; border: 1px solid #c80; border-radius: 6px; color: #fb3; display: none; }
+    #OrganizerPageP7 .lo-row { display: flex; align-items: center; gap: .5em; margin: .25em 0; flex-wrap: wrap; }
+    #OrganizerPageP7 .lo-row .t { flex: 1 1 14em; }
+    #OrganizerPageP7 .lo-row .why { opacity: .65; font-size: .85em; }
+    #OrganizerPageP7 .lo-table { width: 100%; border-collapse: collapse; font-size: .92em; }
+    #OrganizerPageP7 .lo-table td, #OrganizerPageP7 .lo-table th { text-align: left; padding: .4em .6em; border-bottom: 1px solid var(--lo-line); }
+    #OrganizerPageP7 .lo-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(20,20,20,.94); border-top: 1px solid var(--lo-line); padding: .6em 1em; display: flex; gap: .6em; align-items: center; justify-content: flex-end; color: #eee; }
+    #OrganizerPageP7 .lo-bar .dirty { margin-right: auto; color: #fb3; display: none; }
+    #OrganizerPageP7 .lo-bar .msg { margin-right: auto; opacity: .85; }
+    #OrganizerPageP7 .lo-vals span.v { cursor: pointer; margin-right: .8em; text-decoration: underline dotted; display: inline-block; }
+    #OrganizerPageP7 .lo-body { display: none; }
+    #OrganizerPageP7 .lo-card.open > .lo-body { display: block; }
+    #OrganizerPageP7 .lo-caret { transition: transform .15s; opacity: .6; cursor: pointer; }
+    #OrganizerPageP7 .lo-card.open .lo-caret { transform: rotate(90deg); }
+    #OrganizerPageP7 .lo-card.static > .lo-body { display: block; }
   </style>
 
   <div data-role="content">
     <div class="lo-wrap">
-      <h1>Library Organizer <small id="loVersion">1.0.0</small></h1>
+      <h1>Library Organizer <small id="loVersion">1.1.0</small></h1>
       <p class="lo-sub">Collections that build and order themselves from your library.</p>
 
       <div class="lo-tabs" role="tablist">
@@ -94,7 +94,7 @@
             <label class="lo-f"><span>A franchise needs at least</span><input type="number" id="franchiseMin" min="2"></label>
             <label class="lo-f"><span>Order inside a franchise</span><select id="franchiseOrder"></select></label>
           </div>
-          <div class="lo-note">"Story order" has a built-in list for Star Wars and Indiana Jones; every other franchise stays in release order. For your own order, make a collection of your own, choose Story order and use the arrows in its preview.</div>
+          <div class="lo-note">"Story order" is built in for <span id="storyNames">several franchises</span>; every other franchise stays in release order. For your own order, make a collection of your own, choose Story order and use the arrows in its preview.</div>
           <div id="franchiseHint" class="lo-warn"></div>
         </div></div>
 
@@ -138,6 +138,12 @@
         </div></div>
 
         <div class="lo-card static"><div class="lo-body">
+          <h3>What the plugin learned</h3>
+          <div class="lo-note">Tags and genres it stopped counting for a rule, and titles it ruled out by checking Wikidata. Nothing here is permanent: you can undo it.</div>
+          <div id="learnedBox" class="lo-note">Loading…</div>
+        </div></div>
+
+        <div class="lo-card static"><div class="lo-body">
           <h3>What is in my library</h3>
           <div class="lo-tools"><input type="search" id="valSearch" placeholder="Filter genres, tags, countries…"></div>
           <div class="lo-note">Click a value to add it to the filter box you last used while editing a collection.</div>
@@ -168,6 +174,8 @@
           <label class="lo-check"><input type="checkbox" id="removeNonMatching"><div>Take titles out of a collection when they stop matching</div></label>
           <label class="lo-check"><input type="checkbox" id="deleteRemoved"><div>Delete a collection when its rule is removed or turned off<div class="lo-note">Only collections this plugin made. Your media is never touched.</div></div></label>
           <label class="lo-check"><input type="checkbox" id="usePublic"><div>Use the public Wikidata database for genre lists like "Christmas film"<div class="lo-note">Only a genre id is sent. Nothing about your library leaves the server.</div></div></label>
+          <label class="lo-check"><input type="checkbox" id="learnSignals"><div>Learn which tags and genres to trust<div class="lo-note">When a rule uses a public list (Christmas), a tag or genre that almost never matches it, like "Musical", stops counting. See Overview to undo.</div></div></label>
+          <label class="lo-check"><input type="checkbox" id="checkOnline"><div>Check unsure titles on Wikidata<div class="lo-note">A title matched by only one weak signal is looked up by its IMDb id. If Wikidata lists genres for it and none is the one you want, it is left out. Needs the public database above, and sends the IMDb ids of those few titles.</div></div></label>
           <div class="lo-grid">
             <label class="lo-f"><span>Smallest collection to make</span><input type="number" id="minItems" min="1"></label>
             <label class="lo-f"><span>Titles per home screen row</span><input type="number" id="homeRowLimit" min="1"></label>
@@ -197,8 +205,8 @@
   <script type="text/javascript">
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
-      var PAGE_VERSION = 6;
-      var page = document.querySelector('#OrganizerPageP6');
+      var PAGE_VERSION = 7;
+      var page = document.querySelector('#OrganizerPageP7');
       var cfg = null, lastList = null, dirty = false, values = null;
 
       function $(s, r) { return (r || page).querySelector(s); }
@@ -266,7 +274,7 @@
         b.onclick = function () {
           $$('.lo-tab').forEach(function (x) { x.classList.toggle('on', x === b); });
           $$('.lo-panel').forEach(function (p) { p.classList.toggle('on', p.dataset.panel === b.dataset.tab); });
-          if (b.dataset.tab === 'overview') { loadStatus(); }
+          if (b.dataset.tab === 'overview') { loadStatus(); loadLearned(); }
           try { sessionStorage.setItem('loTab', b.dataset.tab); } catch (e) { }
         };
       });
@@ -502,6 +510,7 @@
         list.innerHTML = '';
         node._rows.forEach(function (it, idx) {
           var row = el('<div class="lo-row"><span class="t"><b>' + (idx + 1) + '.</b> ' + esc(it.Name) + (it.Year ? ' (' + it.Year + ')' : '') +
+            (it.Verdict ? ' <span class="lo-chip ' + (it.Verdict === 'Unsure' ? 'warn' : it.Verdict === 'Confirmed' ? 'ok' : '') + '" title="' + (it.Verdict === 'Confirmed' ? 'On the public list, or you included it' : it.Verdict === 'Likely' ? 'More than one signal agrees' : 'Only one weak signal and not on the public list. Check it.') + '">' + it.Verdict + '</span>' : '') +
             ' <span class="why">' + esc((it.Why || []).join(', ')) + '</span></span>' +
             (story ? '<button type="button" class="lo-btn small up" title="Earlier">&#9650;</button><button type="button" class="lo-btn small down" title="Later">&#9660;</button>' : '') +
             '<button type="button" class="lo-btn small notThis">Not a match</button></div>');
@@ -529,7 +538,7 @@
           count.textContent = res.Count + ' title' + (res.Count === 1 ? '' : 's') + (res.Count > res.Items.length ? ' (showing ' + res.Items.length + ')' : '');
           if (readRule(node).ItemOrder === 'Story') {
             note.style.display = 'block';
-            note.textContent = (res.HasBuiltInStory ? 'Built-in story order is used for some of these titles (Star Wars, Indiana Jones). ' : 'There is no built-in story order for these titles, so release order is used until you set one. ') +
+            note.textContent = (res.HasBuiltInStory ? 'Built-in story order is used for some of these titles. ' : 'There is no built-in story order for these titles, so release order is used until you set one. ') +
               'Use the arrows to set your own, then Save.';
           } else { note.style.display = 'none'; }
           renderPreview(node);
@@ -631,6 +640,7 @@
       function loadStatus() {
         return ajax('GET', 'LibraryOrganizer/Status').then(function (s) {
           if (s.Version) { $('#loVersion').textContent = s.Version; }
+          if (s.StoryNames && s.StoryNames.length) { $('#storyNames').textContent = s.StoryNames.join(', '); }
           var b = $('#statusBox');
           if (!s.Last) { b.textContent = 'No sync has run yet. Press "Save and sync now".'; return s; }
           var l = s.Last;
@@ -640,6 +650,33 @@
           b.innerHTML = txt;
           return s;
         }).catch(function () { $('#statusBox').textContent = 'Could not load the status.'; });
+      }
+      function loadLearned() {
+        var box = $('#learnedBox');
+        return ajax('GET', 'LibraryOrganizer/Learned').then(function (l) {
+          box.innerHTML = '';
+          if (!l.Signals.length && !l.RuledOut.length) { box.textContent = 'Nothing yet. This fills in after a sync of a rule that uses a public list, such as Christmas.'; return; }
+          l.Signals.forEach(function (sg) {
+            var row = el('<div class="lo-row"><span class="t"><b>' + esc(sg.Rule) + '</b>: ' + esc(sg.Kind) + ' "' + esc(sg.Value) + '" <span class="why">' + esc(sg.Why) + '</span></span><button type="button" class="lo-btn small">' + (sg.Trusted ? 'Let it learn again' : 'Use it anyway') + '</button></div>');
+            $('button', row).onclick = function () {
+              ajax('POST', 'LibraryOrganizer/Learned/Trust', { Rule: sg.Rule, Kind: sg.Kind, Value: sg.Value, Trust: !sg.Trusted }).then(function () { loadLearned(); });
+            };
+            box.appendChild(row);
+          });
+          if (l.RuledOut.length) {
+            box.appendChild(el('<div style="margin-top:.6em"><b>Ruled out on Wikidata (' + l.RuledOut.length + ')</b></div>'));
+            l.RuledOut.slice(0, 60).forEach(function (t) {
+              var row = el('<div class="lo-row"><span class="t">' + esc(t.Name) + (t.Year ? ' (' + t.Year + ')' : '') + ' <span class="why">left out of ' + esc(t.Rule) + '</span></span><button type="button" class="lo-btn small">Keep it</button></div>');
+              $('button', row).onclick = function () {
+                var node = ruleNodes().filter(function (n) { return readRule(n).Name === t.Rule; })[0];
+                if (!node) { return; }
+                correct(node, '_incl', t.Id, t.Name, t.Year); row.style.opacity = '.4';
+                $('button', row).textContent = 'Added. Save to apply'; $('button', row).disabled = true;
+              };
+              box.appendChild(row);
+            });
+          }
+        }).catch(function () { box.textContent = 'Could not load what was learned.'; });
       }
       $('#btnPlan').onclick = function () {
         var box = $('#planBox'); box.textContent = 'Working it out…';
@@ -660,6 +697,8 @@
         cfg.SyncOnLibraryChange = $('#syncOnChange').checked;
         cfg.SyncOnStartup = $('#syncOnStart').checked;
         cfg.UsePublicDatabase = $('#usePublic').checked;
+        cfg.LearnFromLibrary = $('#learnSignals').checked;
+        cfg.CheckUnsureOnline = $('#checkOnline').checked;
         cfg.ArtworkMode = $('#artMode').value;
         cfg.ArtworkStyle = $('#artStyle').value;
         cfg.DeleteRemovedCollections = $('#deleteRemoved').checked;
@@ -685,6 +724,8 @@
         $('#syncOnChange').checked = c.SyncOnLibraryChange !== false;
         $('#syncOnStart').checked = c.SyncOnStartup !== false;
         $('#usePublic').checked = c.UsePublicDatabase !== false;
+        $('#learnSignals').checked = c.LearnFromLibrary !== false;
+        $('#checkOnline').checked = c.CheckUnsureOnline !== false;
         $('#artMode').value = c.ArtworkMode || 'Replace';
         $('#artStyle').value = c.ArtworkStyle || 'Mosaic';
         $('#deleteRemoved').checked = !!c.DeleteRemovedCollections;

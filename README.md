@@ -7,7 +7,7 @@ Tested on Jellyfin 10.11.
 ## What it does
 
 - **Rules to collections.** A rule matches movies or series by genre, tag, production country, studio, official rating, title keywords, year range or minimum rating. Example rules ship for "Filipino Movies" (country: Philippines) and "Christmas Movies" (Holiday genre, christmas tag, or christmas/santa in the title).
-- **Ordering.** Sort the titles inside a collection by release date, year, name, rating, runtime, date added or story order, ascending or descending. Story order is built in for Star Wars and Indiana Jones, and you can set your own for any collection with the arrows in its preview. A Position pin and a collection order (A to Z, newest, oldest, highest rated, biggest) decide where collections sit on the Collections page.
+- **Ordering.** Sort the titles inside a collection by release date, year, name, rating, runtime, date added or story order, ascending or descending. Story order is built in for Star Wars, Indiana Jones, the Marvel Cinematic Universe, X-Men, Fast and Furious, Planet of the Apes, Alien, Middle-earth, Mad Max, Predator, the Conjuring films, Transformers, Despicable Me, The Hunger Games, Insidious, The Purge, Monsters Inc., Kingsman, The Omen, Underworld and Hannibal Lecter, and you can set your own for any collection with the arrows in its preview. A Position pin and a collection order (A to Z, newest, oldest, highest rated, biggest) decide where collections sit on the Collections page.
 - **Artwork.** Each collection gets a poster, thumb and backdrop drawn from the artwork of the titles inside it, with its name on top (see Artwork below).
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
 - **Runs on its own.** A sync runs about a minute after the server starts, about two minutes after movies or shows are added or their metadata changes, and daily at 4 AM. New matches go in and items that no longer match come out. Nothing to click.
@@ -23,7 +23,7 @@ Open Dashboard and click Library Organizer in the left sidebar. The page title s
 - **Media type.** Movie, Series or Both.
 - **Combine fields.** "Any" puts an item in if enough filled fields match. "All" needs every filled field to match. Several values inside one field (two genres, say) always mean "any of these".
 - **Fields that must match.** With "Any", how many filled fields an item needs (1, 2 or 3). Setting 2 stops a single stray tag from putting an item in.
-- **Public database lists.** Curated genre lists from Wikidata, for example "Christmas film". A title on the list counts as a match by itself (or as one field when Combine is "All"). Search for a genre by name and click Add.
+- **Public database lists.** Curated genre lists from Wikidata, for example "Christmas film". A title on the list counts as a match by itself (or as one field when Combine is "All"). Two helpers keep these rules clean: a tag or genre that almost never matches the list (like "Musical" on the Christmas rule) stops counting, and a title matched by only one weak signal is looked up on Wikidata and left out if Wikidata lists genres for it and none is the one you want. Titles you include or exclude by hand always win, and the Overview tab shows everything that was learned with a button to undo it. Both can be turned off in Settings. Search for a genre by name and click Add.
 - **Corrections.** "Never include" and "Always include" for individual titles. Search for a title, or click "Not a match" next to it in the preview. These win over every other setting.
 - **Genres, Tags, Countries, Studios, Official ratings.** Comma separated, matched exactly (ignoring case).
 - **Title keywords.** Matched anywhere in the title.
@@ -50,6 +50,8 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 
 ## Overview tab
 
+The Overview tab also shows what the plugin learned (ignored tags and genres, titles ruled out on Wikidata).
+
 Shows what the last sync did, "Preview what the next sync would change" (nothing is touched), and what is in your library. The Settings tab has a backup: download your collections and settings, or load them on another server.
 
 ## Install
@@ -71,13 +73,13 @@ Shows what the last sync did, "Preview what the next sync would change" (nothing
 
 Jellyfin sorts a collection page itself only by a few keys, ascending. For the rest (story order, rating, newest first) the plugin stores the collection in the order you chose and re-applies it on every sync, so the order shows up on the collection page and in home rows. Titles with no rating, runtime or date always go last.
 
-Story order has a built-in list for Star Wars and Indiana Jones. For any other franchise, make a collection of your own with Franchises set, choose Story order, press Preview and move titles with the arrows. Titles you haven't placed follow release order.
+Story order has a built-in list for the franchises named above, matched by title and year (so it works with any metadata provider). Automatic franchise collections use it by default and fall back to release order. For any other franchise, make a collection of your own with Franchises set, choose Story order, press Preview and move titles with the arrows. Titles you haven't placed follow release order.
 
 ## Franchises and countries
 
 Collections are listed under their first letter on Jellyfin's Collections page. To find them quickly use the sort button (Date Added puts new ones first), the A-Z bar, or turn on "Show on home".
 
-- **Franchises.** Movies that belong to the same franchise are grouped automatically (Star Wars, Indiana Jones, ...). This uses the collection name TMDb attaches to each movie, so it needs the TMDb metadata provider on your Movies library. The "What is in my library" panel lists the franchises it found. A franchise needs at least 2 movies by default, and its movies are in release order. If you use Jellyfin's own "automatically add to collection" option, those collections are left alone and not duplicated.
+- **Franchises.** Movies that belong to the same franchise are grouped automatically (Star Wars, Indiana Jones, ...). This uses the collection name TMDb attaches to each movie, so it needs the TMDb metadata provider on your Movies library. The "What is in my library" panel lists the franchises it found. A franchise needs at least 2 movies by default, and its movies are in story order where one is built in, otherwise release order. If you use Jellyfin's own "automatically add to collection" option, those collections are left alone and not duplicated.
 - **Countries.** Only the countries you list in settings get a collection: Philippines becomes "Filipino Movies", United Kingdom "British Movies", Japan "Japanese Movies", and countries without a stored adjective become "Movies from Peru". Nothing is made for countries you don't list.
 
 ## Artwork
@@ -91,7 +93,7 @@ For every collection the plugin makes a poster (600x900), a thumb and a backdrop
 
 ## Privacy
 
-The only thing that leaves your server is a request to Wikidata (query.wikidata.org and www.wikidata.org) for a genre list or a genre search, and it contains just the genre id or the text you typed. Nothing about your library is sent. Turn it off with "Use the public Wikidata database" in settings; rules that use a public list then fall back to their other fields.
+The only thing that leaves your server is a request to Wikidata (query.wikidata.org and www.wikidata.org) for a genre list or a genre search, and it contains just the genre id or the text you typed. The one exception is "Check unsure titles on Wikidata": for the few titles a rule is unsure about, their IMDb ids are sent so Wikidata can say what genre they are. Nothing else about your library is sent. Turn it off with "Use the public Wikidata database" in settings (or just the title check with "Check unsure titles on Wikidata"); rules that use a public list then fall back to their other fields.
 
 ## Home screen rows
 

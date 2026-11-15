@@ -79,7 +79,7 @@ public class CountryAndFranchiseTests
         var rules = LibraryQuery.BuildAutoRules(cfg, items, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         Assert.Equal(new[] { "Indiana Jones", "Star Wars" }, rules.Select(r => r.Name).ToArray());
         var sw = rules.First(r => r.Name == "Star Wars");
-        Assert.Equal("Release", sw.ItemOrder);
+        Assert.Equal("Story", sw.ItemOrder);
         Assert.Equal("Same", sw.HomeSort);
         Assert.Equal(2, LibraryQuery.Match(sw, items).Count);
     }

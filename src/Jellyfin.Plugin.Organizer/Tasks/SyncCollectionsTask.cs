@@ -61,6 +61,12 @@ public class SyncCollectionsTask : IScheduledTask
         var started = DateTime.UtcNow;
         var report = new SyncReport { TimeUtc = started };
         var items = LibraryQuery.MoviesAndSeries(_library);
+        Learning.LearnSignals = config.LearnFromLibrary;
+        Learning.CheckOnline = config.CheckUnsureOnline;
+        foreach (var rule in manual.Where(r => r.PublicGenres.Length > 0))
+        {
+            await Learning.AnalyzeAsync(rule, items, _log, ct, persist: true).ConfigureAwait(false);
+        }
         var existing = _library.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = new[] { BaseItemKind.BoxSet },

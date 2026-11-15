@@ -151,3 +151,56 @@ public class SortingTests
         Assert.True(incoming.LegacyCountryCleanupDone);
     }
 }
+
+public class StorySetTests
+{
+    private static Movie Film(string name, int year) => new() { Id = Guid.NewGuid(), Name = name, ProductionYear = year };
+
+    private static string[] Story(params Movie[] films) =>
+        ItemSorter.Order(films, "Story", false).Select(f => f.Name).ToArray();
+
+    [Fact]
+    public void XMenGoesInStoryOrder()
+    {
+        var order = Story(Film("X-Men", 2000), Film("X-Men: First Class", 2011), Film("Logan", 2017), Film("X2", 2003),
+            Film("X-Men: Days of Future Past", 2014));
+        Assert.Equal(new[] { "X-Men: First Class", "X-Men: Days of Future Past", "X-Men", "X2", "Logan" }, order);
+    }
+
+    [Fact]
+    public void FastAndFuriousPutsTokyoDriftAfterFast6()
+    {
+        var order = Story(Film("Furious 7", 2015), Film("The Fast and the Furious: Tokyo Drift", 2006), Film("Fast & Furious 6", 2013),
+            Film("The Fast and the Furious", 2001));
+        Assert.Equal(new[] { "The Fast and the Furious", "Fast & Furious 6", "The Fast and the Furious: Tokyo Drift", "Furious 7" }, order);
+    }
+
+    [Fact]
+    public void ApesAndAlienStartWithThePrequels()
+    {
+        Assert.Equal("Rise of the Planet of the Apes", Story(Film("Planet of the Apes", 1968), Film("Rise of the Planet of the Apes", 2011))[0]);
+        Assert.Equal("Prometheus", Story(Film("Alien", 1979), Film("Prometheus", 2012))[0]);
+    }
+
+    [Fact]
+    public void ASameNameFromAnotherYearIsNotMatched()
+    {
+        // A 1999 film called "Predator" is not the 1987 one; it falls back to release order after the sets.
+        var order = ItemSorter.Order(new[] { Film("Zebra", 1990), Film("Predator", 1999), Film("Prey", 2022) }, "Story", false).Select(f => f.Name).ToArray();
+        Assert.Equal("Prey", order[0]);
+    }
+
+    [Fact]
+    public void AccentsAmpersandsAndLeadingTheDoNotMatter()
+    {
+        Assert.Equal(ItemSorter.TitleKey("The Fast & the Furious"), ItemSorter.TitleKey("fast and the furious"));
+    }
+
+    [Fact]
+    public void EveryBuiltInTitleHasAUniqueSlotInItsSet()
+    {
+        Assert.Contains("Marvel Cinematic Universe", ItemSorter.BuiltInStoryNames);
+        var marvel = Story(Film("Iron Man", 2008), Film("Captain America: The First Avenger", 2011), Film("The Avengers", 2012));
+        Assert.Equal("Captain America: The First Avenger", marvel[0]);
+    }
+}

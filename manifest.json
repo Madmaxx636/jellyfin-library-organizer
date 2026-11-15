@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "1.1.0.0",
+        "changelog": "Story order for 19 more franchises (Marvel, X-Men, Fast and Furious and more), used by default for automatic franchise collections. Rules that use a public list, like Christmas, now ignore tags and genres that rarely match it and check unsure titles on Wikidata. Preview shows how sure each match is.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v1.1.0/LibraryOrganizer_1.1.0.0.zip",
+        "checksum": "f3970500c175666741f88d9e6f288bf5",
+        "timestamp": "2026-11-15T20:13:10Z"
+      },
+      {
         "version": "1.0.1.0",
         "changelog": "Same plugin as the rebuilt 1.0.0, with its own version number so Jellyfin offers it as an update and the checksum matches.",
         "targetAbi": "10.11.0.0",

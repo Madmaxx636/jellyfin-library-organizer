@@ -48,7 +48,7 @@ public static class WikidataLists
     private static HttpClient CreateClient()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("LibraryOrganizerJellyfinPlugin/1.0 (open-source Jellyfin plugin)");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("LibraryOrganizerJellyfinPlugin/1.1 (open-source Jellyfin plugin)");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/sparql-results+json, application/json");
         return client;
     }
@@ -169,6 +169,51 @@ public static class WikidataLists
         tmdb.Remove(string.Empty);
         tmdbTv.Remove(string.Empty);
         return new Entry(imdb, tmdb, tmdbTv, DateTime.UtcNow);
+    }
+
+
+    private static readonly Regex ImdbPattern = new(@"^tt\d{5,10}$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Genres Wikidata lists for films, by IMDb id. A film Wikidata does not know is missing from the result.
+    /// Only the IMDb ids of the titles being checked are sent.
+    /// </summary>
+    public static async Task<Dictionary<string, string[]>> LookupGenres(IReadOnlyList<string> imdbIds, CancellationToken ct)
+    {
+        var result = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        if (!Enabled)
+        {
+            return result;
+        }
+
+        var ids = imdbIds.Where(i => ImdbPattern.IsMatch(i)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        for (var at = 0; at < ids.Count; at += 50)
+        {
+            var batch = ids.Skip(at).Take(50).ToList();
+            var values = string.Join(' ', batch.Select(i => $"\"{i}\""));
+            var query = $"SELECT ?imdb ?g WHERE {{ VALUES ?imdb {{ {values} }} ?f wdt:P345 ?imdb . OPTIONAL {{ ?f wdt:P136 ?g }} }}";
+            var url = "https://query.wikidata.org/sparql?format=json&query=" + Uri.EscapeDataString(query);
+            using var response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+            foreach (var row in doc.RootElement.GetProperty("results").GetProperty("bindings").EnumerateArray())
+            {
+                var imdb = row.GetProperty("imdb").GetProperty("value").GetString() ?? string.Empty;
+                if (imdb.Length == 0) continue;
+                var genres = result.TryGetValue(imdb, out var have) ? have.ToList() : new List<string>();
+                if (row.TryGetProperty("g", out var g))
+                {
+                    var uri = g.GetProperty("value").GetString() ?? string.Empty;
+                    var qid = uri[(uri.LastIndexOf('/') + 1)..];
+                    if (QidPattern.IsMatch(qid) && !genres.Contains(qid)) genres.Add(qid);
+                }
+
+                result[imdb] = genres.ToArray();
+            }
+        }
+
+        return result;
     }
 
     /// <summary>Lets the settings page look up a genre by name.</summary>

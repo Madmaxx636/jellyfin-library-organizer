@@ -149,8 +149,8 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Which collection comes first within a group: Name, Newest, Oldest, Rating or Size.</summary>
     public string CollectionOrder { get; set; } = "Name";
 
-    /// <summary>Item order inside automatic franchise collections: Release (default), Story, Year, Name or Rating.</summary>
-    public string FranchiseItemOrder { get; set; } = "Release";
+    /// <summary>Item order inside automatic franchise collections: Release (default Story: built-in story order where known, otherwise release), Release, Year, Name or Rating.</summary>
+    public string FranchiseItemOrder { get; set; } = "Story";
 
     /// <summary>Item order inside automatic country and genre collections.</summary>
     public string AutoItemOrder { get; set; } = "Name";
@@ -171,6 +171,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Look up curated lists on Wikidata (only a genre id leaves the server). Turn off for fully offline use.</summary>
     public bool UsePublicDatabase { get; set; } = true;
 
+    /// <summary>Stop counting tags and genres that almost never match a rule's public list (for example "Musical" on Christmas).</summary>
+    public bool LearnFromLibrary { get; set; } = true;
+
+    /// <summary>Look up titles a rule is unsure about on Wikidata, by IMDb id, and leave out the ones it knows do not belong.</summary>
+    public bool CheckUnsureOnline { get; set; } = true;
+
     /// <summary>Artwork for the collections: Replace (default), FillMissing or Off.</summary>
     public string ArtworkMode { get; set; } = "Replace";
 
@@ -183,13 +189,13 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Bumped when a new version needs to change older saved settings once.</summary>
     public int SettingsVersion { get; set; }
 
-    public const int CurrentSettingsVersion = 6;
+    public const int CurrentSettingsVersion = 7;
 
     /// <summary>
     /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
     /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
     /// </summary>
-    public const int CurrentPageVersion = 6;
+    public const int CurrentPageVersion = 7;
 
     public int PageVersion { get; set; }
 
@@ -286,6 +292,12 @@ public class PluginConfiguration : BasePluginConfiguration
             }
         }
 
+        if (incoming.PageVersion < 7)
+        {
+            incoming.LearnFromLibrary = existing.LearnFromLibrary;
+            incoming.CheckUnsureOnline = existing.CheckUnsureOnline;
+        }
+
         incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);
         incoming.PageVersion = CurrentPageVersion;
     }
@@ -342,6 +354,15 @@ public class PluginConfiguration : BasePluginConfiguration
             }
 
             config.AutoFranchiseCollections = true;
+        }
+
+        if (config.SettingsVersion < 7)
+        {
+            // Franchises now use story order where one is built in (it falls back to release order).
+            if (string.Equals(config.FranchiseItemOrder, "Release", StringComparison.OrdinalIgnoreCase))
+            {
+                config.FranchiseItemOrder = "Story";
+            }
         }
 
         config.SettingsVersion = CurrentSettingsVersion;
