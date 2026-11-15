@@ -64,14 +64,17 @@ public static class LibraryQuery
         var type = config.AutoMediaType is "Series" or "Both" ? config.AutoMediaType : "Movie";
         var pool = items.Where(i => type == "Both" || (type == "Movie" ? i is Movie : i is Series)).ToList();
         var noun = type switch { "Series" => "Series", "Both" => "Titles", _ => "Movies" };
-        var position = 1000;
+
+        // Group tiers keep franchises together at the top of the Collections page, then countries, then genres.
+        // Within a tier Jellyfin sorts by name. With grouping off the automatic ones sort by name only.
+        var tier = 0;
 
         void Add(string name, CollectionRule rule, int count, int minimum)
         {
             if (count < minimum || takenNames.Contains(name)) return;
             rule.Name = name;
             rule.MediaType = rule.MediaType == "Movie" && type != "Movie" && rule.Franchises.Length == 0 ? type : rule.MediaType;
-            rule.Position = position++;
+            rule.Position = config.GroupAutoCollections ? tier : 0;
             rule.ShowOnHome = config.AutoShowOnHome;
             result.Add(rule);
             takenNames.Add(name);
@@ -79,6 +82,7 @@ public static class LibraryQuery
 
         if (config.AutoGenreCollections)
         {
+            tier = 400;
             foreach (var g in pool.SelectMany(i => i.Genres).Where(g => !string.IsNullOrWhiteSpace(g))
                          .GroupBy(g => g.Trim(), System.StringComparer.OrdinalIgnoreCase)
                          .OrderBy(g => g.Key, System.StringComparer.OrdinalIgnoreCase))
@@ -89,7 +93,7 @@ public static class LibraryQuery
         }
 
         // Only the countries named in settings, never every country in the library.
-        position = 500;
+        tier = 300;
         foreach (var country in countries)
         {
             var count = pool.Count(i => i.ProductionLocations.Any(c => CountryNames.Same(c, country)));
@@ -101,7 +105,7 @@ public static class LibraryQuery
         // Real franchises (Star Wars, Indiana Jones) from the collection names TMDb gives each movie.
         if (config.AutoFranchiseCollections)
         {
-            position = 2000;
+            tier = 200;
             var groups = items.OfType<Movie>()
                 .Where(m => !string.IsNullOrWhiteSpace(m.CollectionName))
                 .GroupBy(m => m.CollectionName!.Trim(), System.StringComparer.OrdinalIgnoreCase)

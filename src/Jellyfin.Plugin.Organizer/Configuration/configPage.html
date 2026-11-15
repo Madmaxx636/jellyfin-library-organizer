@@ -2,10 +2,10 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Library Organizer</title></head>
 <body>
-<div id="OrganizerPageP4" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+<div id="OrganizerPageP5" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
   <div data-role="content">
     <div class="content-primary">
-      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 0.7.0, version 4</small></h1>
+      <h1>Library Organizer <small style="opacity:.5;font-size:.5em">settings page 1.0.0, version 5</small></h1>
       <p>Each rule builds one collection. Lists are comma separated. Genres, tags, countries, studios and ratings match exactly (ignoring case); title keywords match anywhere in the title; languages can be names (Korean) or codes (kor).</p>
 
       <details id="values" style="margin:1em 0">
@@ -24,6 +24,7 @@
 
         <h2>Automatic collections</h2>
         <p>These build themselves from your library. Nothing is created for a country unless you list it here.</p>
+        <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGroup" /><span>Sort automatic collections as franchises first, then countries, then genres (otherwise one A-Z list)</span></label></div>
         <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoFranchise" /><span>Group movies from the same franchise (Star Wars, Indiana Jones...) using the collection TMDb gives each movie</span></label></div>
         <label style="margin-left:2em">A franchise needs at least <input type="number" id="franchiseMin" min="2" style="width:5em"> movies</label>
         <div class="checkboxContainer" style="margin-top:.8em"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="autoGenre" /><span>One collection per genre ("Comedy Movies")</span></label></div>
@@ -57,7 +58,7 @@
   <script type="text/javascript">
     (function () {
       var pluginId = '6f1c2a54-3b7e-4d0a-9a51-2c8e7d4b1f90';
-      var page = document.querySelector('#OrganizerPageP4');
+      var page = document.querySelector('#OrganizerPageP5');
       var cfg = null, lastList = null;
 
       var listFields = [
@@ -327,6 +328,7 @@
         cfg.AutoGenreCollections = page.querySelector('#autoGenre').checked;
         cfg.AutoCountries = page.querySelector('#autoCountries').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
         cfg.AutoFranchiseCollections = page.querySelector('#autoFranchise').checked;
+        cfg.GroupAutoCollections = page.querySelector('#autoGroup').checked;
         cfg.FranchiseMinItems = Number(page.querySelector('#franchiseMin').value) || 2;
         cfg.AutoShowOnHome = page.querySelector('#autoHome').checked;
         cfg.AutoMediaType = page.querySelector('#autoType').value;
@@ -334,7 +336,7 @@
         cfg.MinItems = Number(page.querySelector('#minItems').value) || 1;
         cfg.HomeRowLimit = Number(page.querySelector('#homeRowLimit').value) || 16;
         cfg.Rules = readRules();
-        cfg.PageVersion = 4;
+        cfg.PageVersion = 5;
       }
 
       page.addEventListener('pageshow', function () {
@@ -353,6 +355,7 @@
           page.querySelector('#autoGenre').checked = c.AutoGenreCollections;
           page.querySelector('#autoCountries').value = (c.AutoCountries || []).join(', ');
           page.querySelector('#autoFranchise').checked = c.AutoFranchiseCollections;
+          page.querySelector('#autoGroup').checked = c.GroupAutoCollections !== false;
           page.querySelector('#franchiseMin').value = c.FranchiseMinItems || 2;
           page.querySelector('#autoHome').checked = c.AutoShowOnHome;
           page.querySelector('#autoType').value = c.AutoMediaType || 'Movie';

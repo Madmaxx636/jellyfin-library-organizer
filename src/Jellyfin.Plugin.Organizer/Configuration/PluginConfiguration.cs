@@ -128,6 +128,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Group movies that belong to the same franchise (Star Wars, Indiana Jones) from TMDb collection data.</summary>
     public bool AutoFranchiseCollections { get; set; } = true;
 
+    /// <summary>Sort automatic collections as franchises, then countries, then genres, instead of one A-Z list.</summary>
+    public bool GroupAutoCollections { get; set; } = true;
+
     /// <summary>A franchise needs at least this many movies in your library.</summary>
     public int FranchiseMinItems { get; set; } = 2;
 
@@ -162,7 +165,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Bumped whenever the settings page gains fields. A page older than this can't send them, so a save from
     /// it must not reset them. Also part of the page address, so browsers never reuse an old cached page.
     /// </summary>
-    public const int CurrentPageVersion = 4;
+    public const int CurrentPageVersion = 5;
 
     public int PageVersion { get; set; }
 
@@ -227,6 +230,11 @@ public class PluginConfiguration : BasePluginConfiguration
                     rule.Franchises = old.Franchises;
                 }
             }
+        }
+
+        if (incoming.PageVersion < 5)
+        {
+            incoming.GroupAutoCollections = existing.GroupAutoCollections;
         }
 
         incoming.SettingsVersion = Math.Max(incoming.SettingsVersion, existing.SettingsVersion);

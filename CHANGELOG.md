@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0 - First stable release
+
+New
+- **Automatic collections sort together.** Franchises come first on the Collections page, then countries, then genres, each A-Z, instead of one long alphabetical list. Turn it off in settings ("Automatic collections") to go back to a single A-Z list.
+
+Changed
+- Automatic collections no longer use numbered sort positions that grew with the library. They use three fixed groups, so the order stays the same as titles are added.
+- The settings page has a new address (page version 5). The server keeps your newer settings if a cached older page saves.
+- Version and user agent bumped to 1.0.
+
+Notes
+- Franchises come from the collection TMDb gives each movie. Collections are listed under their first letter on the Collections page, so use the sort button or the A-Z bar to find them, or turn on "Show on home".
+- Everything from 0.1 to 0.7 is included: rules, genres, countries you choose, franchises, public Christmas list with corrections, generated artwork, automatic sync, and home screen rows.
+
 ## 0.7.0 - Franchises, and only the countries you choose
 
 New

@@ -130,4 +130,30 @@ public class CountryAndFranchiseTests
         Assert.False(incoming.AutoFranchiseCollections);
         Assert.Equal(4, incoming.FranchiseMinItems);
     }
+
+    [Fact]
+    public void AutomaticCollectionsSortFranchisesThenCountriesThenGenres()
+    {
+        var cfg = new PluginConfiguration { AutoCountries = new[] { "Philippines" }, AutoMinItems = 2, MinItems = 2 };
+        var items = new List<BaseItem>
+        {
+            Film("A", 2000, "Philippines", "Alpha Collection", new[] { "Drama" }),
+            Film("B", 2001, "Philippines", "Alpha Collection", new[] { "Drama" })
+        };
+        var rules = LibraryQuery.BuildAutoRules(cfg, items, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        int Tier(string n) => rules.Single(r => r.Name == n).Position;
+        Assert.True(Tier("Alpha") < Tier("Filipino Movies"));
+        Assert.True(Tier("Filipino Movies") < Tier("Drama Movies"));
+        cfg.GroupAutoCollections = false;
+        rules = LibraryQuery.BuildAutoRules(cfg, items, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        Assert.All(rules, r => Assert.Equal(0, r.Position));
+    }
+
+    [Fact]
+    public void OldPageKeepsGroupingChoice()
+    {
+        var incoming = new PluginConfiguration { PageVersion = 4 };
+        PluginConfiguration.KeepNewerFields(incoming, new PluginConfiguration { GroupAutoCollections = false });
+        Assert.False(incoming.GroupAutoCollections);
+    }
 }

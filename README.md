@@ -11,7 +11,7 @@ Tested on Jellyfin 10.11.
 - **Artwork.** Each collection gets a poster, thumb and backdrop drawn from the artwork of the titles inside it, with its name on top (see Artwork below).
 - **Home screen rows.** Each collection can appear as a row on the home screen (needs the plugins listed below).
 - **Runs on its own.** A sync runs about a minute after the server starts, about two minutes after movies or shows are added or their metadata changes, and daily at 4 AM. New matches go in and items that no longer match come out. Nothing to click.
-- **Automatic genre and country collections** are on by default, so a fresh install organizes the library without any rules. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
+- **Automatic collections** (franchises, genres, and the countries you list) are on by default, so a fresh install organizes the library without any rules. They sort together on the Collections page: franchises, then countries, then genres. You can also run "Sync organizer collections" by hand from Dashboard, Scheduled Tasks.
 
 ## Settings
 
@@ -37,7 +37,7 @@ Open Dashboard and click Library Organizer in the left sidebar. The page title s
 
 **Helpers.** The "What is in my library" panel lists the genres, tags, countries, studios and ratings you actually have, with counts. Click one to add it to the field you last used. "Add from template" gives starting points such as kids and family, decades, Korean movies and Halloween.
 
-**Automatic collections.** On by default: franchise collections (see below), one collection per genre, and one per country you list in settings. Genres: build one collection per genre ("Comedy Movies"), only when there are at least N items. A manual rule with the same name wins, and an automatic collection with exactly the same items as one of your rules is skipped.
+**Automatic collections.** On by default: franchise collections (see below), one collection per genre, and one per country you list in settings. Sort automatic collections as franchises, then countries, then genres, or as one A-Z list. Genres: build one collection per genre ("Comedy Movies"), only when there are at least N items. A manual rule with the same name wins, and an automatic collection with exactly the same items as one of your rules is skipped.
 
 **General.**
 
@@ -64,6 +64,8 @@ Use "Save, then sync collections now" to apply changes immediately. Otherwise th
 4. That's it. Collections build themselves about a minute after the restart. To force it, use "Save, then sync collections now" on the settings page.
 
 ## Franchises and countries
+
+Collections are listed under their first letter on Jellyfin's Collections page. To find them quickly use the sort button (Date Added puts new ones first), the A-Z bar, or turn on "Show on home".
 
 - **Franchises.** Movies that belong to the same franchise are grouped automatically (Star Wars, Indiana Jones, ...). This uses the collection name TMDb attaches to each movie, so it needs the TMDb metadata provider on your Movies library. The "What is in my library" panel lists the franchises it found. A franchise needs at least 2 movies by default, and its movies are in release order. If you use Jellyfin's own "automatically add to collection" option, those collections are left alone and not duplicated.
 - **Countries.** Only the countries you list in settings get a collection: Philippines becomes "Filipino Movies", United Kingdom "British Movies", Japan "Japanese Movies", and countries without a stored adjective become "Movies from Peru". Nothing is made for countries you don't list.
