@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "1.0.0.0",
+        "changelog": "First stable release. Automatic collections sort franchises first, then countries, then genres (optional). Cleanup and docs.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v1.0.0/LibraryOrganizer_1.0.0.0.zip",
+        "checksum": "4cb2d9d98a38d91d435e1900414309f2",
+        "timestamp": "2026-11-15T15:39:05Z"
+      },
+      {
         "version": "0.7.0.0",
         "changelog": "Franchise collections (Star Wars, Indiana Jones). Country collections only for countries you list. One-time cleanup of the old per-country collections.",
         "targetAbi": "10.11.0.0",
