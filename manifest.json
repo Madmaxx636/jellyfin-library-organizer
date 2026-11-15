@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "0.5.1.0",
+        "changelog": "Fixes an old cached settings page resetting the stricter Christmas rule on save. Tightens the Christmas rule on upgrade even if edited. Warns about loose rules.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Madmaxx636/jellyfin-library-organizer/releases/download/v0.5.1/LibraryOrganizer_0.5.1.0.zip",
+        "checksum": "3d717d2e724535cf581aac4f1b956c7f",
+        "timestamp": "2026-11-15T00:52:01Z"
+      },
+      {
         "version": "0.5.0.0",
         "changelog": "Fixes items never leaving a collection. Adds Wikidata genre lists, never/always include per title, fields-that-must-match, and a stricter stock Christmas rule.",
         "targetAbi": "10.11.0.0",
